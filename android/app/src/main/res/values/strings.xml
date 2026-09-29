@@ -1,16 +1,9 @@
 <resources>
     <string name="app_name">Expense Companion</string>
     <string name="notification_service_label">Expense Tracker Notification Capture</string>
-    <string name="status_connected">Connected</string>
-    <string name="status_unreachable">Server Unreachable</string>
-    <string name="outbox_pending_count">Pending Outbox Messages: %1$d</string>
-    <string name="btn_sync_now">Sync Outbox Now</string>
-    <string name="btn_test_ping">Test Ping Server</string>
-    <string name="btn_backfill_sms">Backfill Recent Bank SMS</string>
-    <string name="btn_battery_opt">Request Battery Exemption</string>
-    <string name="btn_notif_permission">Enable Notification Listener</string>
-    <string name="server_url_label">Server URL</string>
-    <string name="device_id_label">Device ID</string>
-    <string name="device_secret_label">HMAC Secret</string>
-    <string name="save_settings">Save Settings</string>
+    <string name="outbox_pending_count">%1$d messages queued</string>
+    <string name="server_url_label">Backend Base URL</string>
+    <string name="device_id_label">Device Identifier</string>
+    <string name="device_secret_label">HMAC Secret Key</string>
+    <string name="save_settings">Save Configuration</string>
 </resources>
