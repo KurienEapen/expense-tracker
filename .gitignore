@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+*.sqlite
+*.sqlite3
+*.db
+*.log
+.env
+.DS_Store
+
+# Android build outputs
+android/.gradle/
+android/build/
+android/app/build/
+*.apk
+*.aab
