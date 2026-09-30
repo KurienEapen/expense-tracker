@@ -27,10 +27,10 @@ def test_amount_to_paise():
     assert amount_to_paise("invalid") == 0
 
 def test_clean_merchant():
-    assert clean_merchant("at ZOMATO.") == "ZOMATO"
-    assert clean_merchant("BLUE TOKAI COFFEE.") == "BLUE TOKAI COFFEE"
-    assert clean_merchant("RELIANCE DIGITAL on 29-Sep-2026") == "RELIANCE DIGITAL"
-    assert clean_merchant("INDIAN OIL CORP on 29-09-2026. Surcharge waiver eligible.") == "INDIAN OIL CORP"
+    assert clean_merchant("at ZOMATO.") == "Zomato"
+    assert clean_merchant("BLUE TOKAI COFFEE.") == "Blue Tokai Coffee"
+    assert clean_merchant("RELIANCE DIGITAL on 29-Sep-2026") == "Reliance Digital"
+    assert clean_merchant("INDIAN OIL CORP on 29-09-2026. Surcharge waiver eligible.") == "Indian Oil Corp"
     assert clean_merchant(None) is None
 
 def test_parse_date():
@@ -99,7 +99,7 @@ def test_fallback_parser():
     assert parsed.amount_paise == 75000
     assert parsed.card_last4 == "9999"
     assert parsed.transaction_type == "debit"
-    assert parsed.merchant_clean == "STARBUCKS"
+    assert parsed.merchant_clean == "Starbucks"
     assert parsed.parser_confidence == 0.5
 
 def test_otp_rejection():

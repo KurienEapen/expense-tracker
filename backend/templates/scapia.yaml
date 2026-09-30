@@ -18,12 +18,12 @@
       expected:
         amount_paise: 120000
         card_last4: "3456"
-        merchant: "CLEARTRIP"
+        merchant: "Cleartrip"
     - input: "INR 550.00 debited from Scapia Card xx3456 at ZOMATO."
       expected:
         amount_paise: 55000
         card_last4: "3456"
-        merchant: "ZOMATO"
+        merchant: "Zomato"
 
 - id: federal_generic_spend
   issuer: Federal

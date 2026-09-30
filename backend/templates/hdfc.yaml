@@ -3,6 +3,61 @@
 # Normalized sender: HDFCBK
 # Indian telecom prefix variants handled at ingestion: VK-HDFCBK, AD-HDFCBK, etc.
 
+- id: hdfc_spent_at
+  issuer: HDFC
+  card_type: credit
+  senders: ["HDFCBK", "HDFCBANKCC"]
+  transaction_type: debit
+  regex: >-
+    Spent\s+(?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+On\s+HDFC\s+Bank\s+Card\s+[xX*]*(\d{4})\s+At\s+(.+?)\s+On\s+(\d{4}-\d{2}-\d{2}(?::\d{2}:\d{2}:\d{2})?)
+  groups:
+    amount: 1
+    card_last4: 2
+    merchant: 3
+    txn_date: 4
+  test_cases:
+    - input: "Spent Rs.1 On HDFC Bank Card 6348 At GYFTR13752683 On 2026-09-30:20:50:08.Not You? To Block+Reissue Call 18002586161/SMS BLOCK CC 6348 to 7308080808"
+      expected:
+        amount_paise: 100
+        card_last4: "6348"
+        merchant: "GYFTR13752683"
+
+- id: hdfc_online_payment_credit
+  issuer: HDFC
+  card_type: credit
+  senders: ["HDFCBK", "HDFCBANKCC"]
+  transaction_type: credit
+  regex: >-
+    (?:Online\s+)?Payment\s+of\s+(?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?).*?credited\s+to\s+your\s+card\s+ending\s+(\d{4})\s+On\s+(\d{2}/[A-Za-z]{3}/\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+    txn_date: 3
+  test_cases:
+    - input: "HDFC Bank Cardmember, Online Payment of Rs.502 vide Ref# 181e89a5d2eea0c was credited to your card ending 6348 On 01/JUL/2026_value Date 30/JUN/2026"
+      expected:
+        amount_paise: 50200
+        card_last4: "6348"
+        transaction_type: "credit"
+
+- id: hdfc_payment_received
+  issuer: HDFC
+  card_type: credit
+  senders: ["HDFCBK", "HDFCBANKCC"]
+  transaction_type: credit
+  regex: >-
+    PAYMENT\s+OF\s+(?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+RECEIVED\s+TOWARDS\s+YOUR\s+CREDIT\s+CARD\s+ENDING\s+WITH\s+(\d{4})\s+ON\s+(\d{1,2}-\d{1,2}-\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+    txn_date: 3
+  test_cases:
+    - input: "DEAR HDFCBANK CARDMEMBER, PAYMENT OF Rs. 9763.00 RECEIVED TOWARDS YOUR CREDIT CARD ENDING WITH 6348 ON 1-8-2026.YOUR AVAILABLE LIMIT IS RS. 395000.00"
+      expected:
+        amount_paise: 976300
+        card_last4: "6348"
+        transaction_type: "credit"
+
 - id: hdfc_credit_debit_spend
   issuer: HDFC
   card_type: credit
@@ -20,12 +75,12 @@
       expected:
         amount_paise: 184000
         card_last4: "4321"
-        merchant: "ZOMATO"
+        merchant: "Zomato"
     - input: "Rs 350.00 spent on HDFC Bank Card x9876 at SWIGGY on 15-08-2026. Avl Lmt: Rs 28,650.00"
       expected:
         amount_paise: 35000
         card_last4: "9876"
-        merchant: "SWIGGY"
+        merchant: "Swiggy"
 
 - id: hdfc_credit_emi
   issuer: HDFC

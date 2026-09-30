@@ -2,6 +2,30 @@
 # Covers: HSBC Credit Card, HSBC Debit Card
 # Normalized senders: HSBCIN, HSBC
 
+- id: hsbc_credit_used_at
+  issuer: HSBC
+  card_type: credit
+  senders: ["HSBCIN", "HSBC"]
+  transaction_type: debit
+  regex: >-
+    HSBC\s+creditcard\s+[xX*]+(\d{4})\s+used\s+at\s+(.+?)\s+for\s+(?:INR|Rs\.?)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+on\s+(\d{2}/\d{2}/\d{2,4})
+  groups:
+    card_last4: 1
+    merchant: 2
+    amount: 3
+    txn_date: 4
+  test_cases:
+    - input: "HSBC creditcard xxxxx7764 used at raz*zomato online order for INR 325.83 on 03/08/26.Limit Rs 488674.17 Due Rs 325.83.Report fraud on +914061268002"
+      expected:
+        amount_paise: 32583
+        card_last4: "7764"
+        merchant: "Zomato"
+    - input: "HSBC creditcard xxxxx7764 used at amazonin for INR 1008.00 on 06/08/26.Limit Rs 483599.35 Due Rs 5400.65.Report fraud on +914061268002"
+      expected:
+        amount_paise: 100800
+        card_last4: "7764"
+        merchant: "Amazon"
+
 - id: hsbc_credit_spend
   issuer: HSBC
   card_type: credit
@@ -18,7 +42,7 @@
       expected:
         amount_paise: 320000
         card_last4: "5566"
-        merchant: "IKEA"
+        merchant: "Ikea"
     - input: "INR 400.00 charged on your HSBC Card No. xx5566."
       expected:
         amount_paise: 40000

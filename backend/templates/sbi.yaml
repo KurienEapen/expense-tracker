@@ -19,12 +19,12 @@
       expected:
         amount_paise: 450000
         card_last4: "7654"
-        merchant: "RELIANCE DIGITAL"
+        merchant: "Reliance Digital"
     - input: "SBI Credit Card no. 1234 was used for Rs 850.00 at DOMINOS on 15-Aug-2026."
       expected:
         amount_paise: 85000
         card_last4: "1234"
-        merchant: "DOMINOS"
+        merchant: "Dominos"
 
 - id: sbi_credit_reward
   issuer: SBI

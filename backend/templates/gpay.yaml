@@ -1,0 +1,42 @@
+# Google Pay & UPI — Notification Parser Templates
+# Covers: GPay payment received, payment sent, UPI transfers
+# Senders: GPAY, Google Pay, com.google.android.apps.nbu.paisa.user
+
+- id: gpay_received_credit
+  issuer: GPAY
+  card_type: upi
+  senders: ["GPAY", "GOOGLEPAY"]
+  transaction_type: credit
+  regex: >-
+    (?::\s+)?([A-Za-z0-9\s]+?)\s+paid\s+you\s+(?:Rs\.?|INR|₹)\s*([0-9,]+(?:\.[0-9]{1,2})?)[\s\!]*$
+  groups:
+    merchant: 1
+    amount: 2
+  test_cases:
+    - input: ": Manju Babu paid you ₹1,734.23!"
+      expected:
+        amount_paise: 173423
+        merchant: "Manju Babu"
+        transaction_type: "credit"
+    - input: "Jobel Johny paid you ₹1,777.34!"
+      expected:
+        amount_paise: 177734
+        merchant: "Jobel Johny"
+        transaction_type: "credit"
+
+- id: gpay_sent_debit
+  issuer: GPAY
+  card_type: upi
+  senders: ["GPAY", "GOOGLEPAY"]
+  transaction_type: debit
+  regex: >-
+    Paid\s+(?:₹|Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+to\s+([A-Za-z0-9\s&'-]+?)(?:\s+using|\.|\s+UPI|$)
+  groups:
+    amount: 1
+    merchant: 2
+  test_cases:
+    - input: "Paid ₹340 to Ramesh Kirana using HDFC Bank xx9876. UPI Ref: 627389102938"
+      expected:
+        amount_paise: 34000
+        merchant: "Ramesh Kirana"
+        transaction_type: "debit"

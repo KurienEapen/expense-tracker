@@ -1,6 +1,43 @@
 # Axis Bank (Indian Oil Co-brand) — SMS Parser Templates
-# Covers: Axis Bank Indian Oil credit card (fuel surcharge waiver)
+# Covers: Axis Bank Indian Oil credit card (fuel surcharge waiver), Axis Bank credit card multi-line spend
 # Normalized senders: AXISBK, AXISBKCC, AXISBN
+
+- id: axis_multiline_spend
+  issuer: Axis
+  card_type: credit
+  senders: ["AXISBK", "AXISBKCC"]
+  transaction_type: debit
+  regex: >-
+    Spent\s+(?:INR|Rs\.?)\s*([0-9,]+(?:\.[0-9]{1,2})?)[\s\r\n]+(?:Axis\s+Bank\s+)?Card\s+no\.?\s+[xX*]+(\d{4})[\s\r\n]+(\d{2}-\d{2}-\d{2,4}(?:\s+\d{2}:\d{2}:\d{2}(?:\s+[A-Z]{3})?)?)[\s\r\n]+(.+?)[\s\r\n]+(?:Avl\s+Limit|Available\s+Limit)
+  groups:
+    amount: 1
+    card_last4: 2
+    txn_date: 3
+    merchant: 4
+  test_cases:
+    - input: "Spent INR 40\nAxis Bank Card no. XX9456\n11-07-26 00:06:31 IST\nD LITE BAKE\nAvl Limit: INR 238373.09\nNot you? SMS BLOCK 9456 to 919951860002"
+      expected:
+        amount_paise: 4000
+        card_last4: "9456"
+        merchant: "D Lite Bake"
+
+- id: axis_payment_received
+  issuer: Axis
+  card_type: credit
+  senders: ["AXISBK", "AXISBKCC"]
+  transaction_type: credit
+  regex: >-
+    Payment\s+of\s+(?:INR|Rs\.?)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+has\s+been\s+received\s+towards\s+your\s+Axis\s+Bank\s+Credit\s+Card\s+[xX*]+(\d{4})\s+on\s+(\d{2}-\d{2}-\d{2,4})
+  groups:
+    amount: 1
+    card_last4: 2
+    txn_date: 3
+  test_cases:
+    - input: "Payment of INR 1060.84 has been received towards your Axis Bank Credit Card XX9456 on 02-07-26 - Axis Bank"
+      expected:
+        amount_paise: 106084
+        card_last4: "9456"
+        transaction_type: "credit"
 
 - id: axis_credit_spend
   issuer: Axis
@@ -19,7 +56,7 @@
       expected:
         amount_paise: 200000
         card_last4: "1122"
-        merchant: "INDIAN OIL CORP"
+        merchant: "Indian Oil Corp"
 
 - id: axis_fuel_surcharge_waiver
   issuer: Axis

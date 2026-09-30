@@ -18,12 +18,12 @@
       expected:
         amount_paise: 32000
         card_last4: "8910"
-        merchant: "BLUE TOKAI COFFEE"
+        merchant: "Blue Tokai Coffee"
     - input: "INR 1,200.00 debited from ICICI Bank Credit Card XX5678 at AMAZON."
       expected:
         amount_paise: 120000
         card_last4: "5678"
-        merchant: "AMAZON"
+        merchant: "Amazon"
 
 - id: icici_debit_upi
   issuer: ICICI

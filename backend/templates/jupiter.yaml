@@ -18,12 +18,12 @@
       expected:
         amount_paise: 45000
         card_last4: "7890"
-        merchant: "BLINKIT"
+        merchant: "Blinkit"
     - input: "INR 2,300.00 debited on Jupiter Card xx7890 at MYNTRA."
       expected:
         amount_paise: 230000
         card_last4: "7890"
-        merchant: "MYNTRA"
+        merchant: "Myntra"
 
 - id: jupiter_cashback_credit
   issuer: Jupiter

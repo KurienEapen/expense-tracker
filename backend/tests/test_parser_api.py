@@ -46,7 +46,7 @@ def test_test_parse_endpoint(client):
     assert data is not None
     assert data["amount_paise"] == 184000
     assert data["card_last4"] == "4321"
-    assert data["merchant_clean"] == "ZOMATO"
+    assert data["merchant_clean"] == "Zomato"
     assert data["issuer"] == "HDFC"
     assert data["transaction_type"] == "debit"
 
@@ -70,7 +70,7 @@ def test_ingest_auto_creates_transaction(client):
     assert txn["amount_paise"] == 32000
     assert txn["amount_inr"] == 320.0
     assert txn["card_last4"] == "8910"
-    assert txn["merchant_clean"] == "BLUE TOKAI COFFEE"
+    assert txn["merchant_clean"] == "Blue Tokai Coffee"
     assert txn["issuer"] == "ICICI"
 
 def test_filter_transactions(client):
