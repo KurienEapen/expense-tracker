@@ -24,3 +24,7 @@ class IngestResponse(BaseModel):
     raw_id: Optional[int] = None
     message: Optional[str] = None
     parsed_transaction_id: Optional[int] = None
+    needs_review: bool = False
+    merchant: Optional[str] = None
+    amount_inr: Optional[float] = None
+    category: Optional[str] = None

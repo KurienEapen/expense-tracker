@@ -7,6 +7,7 @@
   card_type: upi
   senders: ["GPAY", "GOOGLEPAY"]
   transaction_type: credit
+  category_override: "Transfers & Payments"
   regex: >-
     (?::\s+)?([A-Za-z0-9\s]+?)\s+paid\s+you\s+(?:Rs\.?|INR|₹)\s*([0-9,]+(?:\.[0-9]{1,2})?)[\s\!]*$
   groups:
@@ -18,11 +19,13 @@
         amount_paise: 173423
         merchant: "Manju Babu"
         transaction_type: "credit"
+        category_override: "Transfers & Payments"
     - input: "Jobel Johny paid you ₹1,777.34!"
       expected:
         amount_paise: 177734
         merchant: "Jobel Johny"
         transaction_type: "credit"
+        category_override: "Transfers & Payments"
 
 - id: gpay_sent_debit
   issuer: GPAY

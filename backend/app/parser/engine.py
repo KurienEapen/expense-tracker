@@ -102,8 +102,17 @@ def parse_with_fallback(
     if amount_paise <= 0:
         return None
 
-    # Detect transaction type
     lower_body = body.lower()
+
+    # Suppress non-transactional messages that mention amounts (e.g. credit limit offers, application status)
+    if any(k in lower_body for k in [
+        "tentative credit limit", "application no", "credit limit ranging",
+        "applied for", "track your application", "eligible for loan",
+        "pre-approved", "congratulations! you are eligible"
+    ]):
+        return None
+
+    # Detect transaction type
     if any(k in lower_body for k in ["debited", "spent", "paid", "withdrawn", "sent"]):
         txn_type = "debit"
     elif any(k in lower_body for k in ["credited", "received", "refund", "cashback"]):

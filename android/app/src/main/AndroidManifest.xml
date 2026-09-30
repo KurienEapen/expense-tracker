@@ -46,6 +46,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- Receiver for 1-tap categorization actions from notification shade -->
+        <receiver
+            android:name=".receiver.CategoryActionReceiver"
+            android:exported="false" />
+
         <!-- Notification Listener Service for GPay and Banking Apps -->
         <service
             android:name=".service.ExpenseNotificationListenerService"

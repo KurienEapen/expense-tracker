@@ -69,5 +69,9 @@ def ingest_message(
         status="stored",
         raw_id=raw_message.id,
         parsed_transaction_id=txn.id if txn else None,
+        needs_review=txn.needs_review if txn else False,
+        merchant=txn.merchant_clean if txn else None,
+        amount_inr=(txn.amount_paise / 100.0) if txn else None,
+        category=txn.category if txn else None,
         message="Successfully ingested and parsed raw message"
     )

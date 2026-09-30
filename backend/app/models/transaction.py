@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, BigInteger, String, Text, DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, BigInteger, String, Text, DateTime, Float, Boolean, ForeignKey
 from app.core.database import Base
 
 class Transaction(Base):
@@ -17,6 +17,9 @@ class Transaction(Base):
     merchant_raw = Column(String(256), nullable=True)
     merchant_clean = Column(String(256), nullable=True, index=True)
     category = Column(String(64), nullable=True, index=True)
+    needs_review = Column(Boolean, default=False, nullable=False, index=True)  # True = ambiguous, needs user tap
+    review_source = Column(String(32), default="auto", nullable=False)         # auto | user_notification | web
+    reviewed_at_utc = Column(DateTime, nullable=True)
     transacted_at_utc = Column(DateTime, nullable=False, index=True)
     parsed_by_template_id = Column(String(64), nullable=True)
     parser_confidence = Column(Float, default=1.0, nullable=False)  # 1.0 = template match, 0.5 = fallback

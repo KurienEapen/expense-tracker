@@ -5,12 +5,14 @@ from sqlalchemy.orm import Session
 from app.models.raw_message import RawMessage
 from app.models.transaction import Transaction
 from app.parser.engine import parse_message
+from app.categorizer.service import apply_categorization_to_transaction
 
 logger = logging.getLogger(__name__)
 
 def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
     """
-    Parses a single RawMessage and upserts the corresponding Transaction record.
+    Parses a single RawMessage, upserts the corresponding Transaction record,
+    and applies multi-tier auto-categorization.
     """
     parsed = parse_message(raw.sender, raw.body, raw.received_at_utc)
     if not parsed:
@@ -28,7 +30,9 @@ def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
         txn.currency = parsed.currency
         txn.merchant_raw = parsed.merchant_raw
         txn.merchant_clean = parsed.merchant_clean
-        txn.category = parsed.category
+        # Retain category if already reviewed by user, else use template category
+        if not txn.review_source or txn.review_source == "auto":
+            txn.category = parsed.category
         txn.transacted_at_utc = parsed.transacted_at_utc
         txn.parsed_by_template_id = parsed.parsed_by_template_id
         txn.parser_confidence = parsed.parser_confidence
@@ -52,6 +56,10 @@ def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
             status=parsed.status,
         )
         db.add(txn)
+
+    # Apply auto-categorization if not explicitly reviewed by user
+    if not txn.reviewed_at_utc or txn.review_source == "auto":
+        apply_categorization_to_transaction(db, txn)
 
     db.commit()
     db.refresh(txn)

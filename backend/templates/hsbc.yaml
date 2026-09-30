@@ -8,7 +8,7 @@
   senders: ["HSBCIN", "HSBC"]
   transaction_type: debit
   regex: >-
-    HSBC\s+creditcard\s+[xX*]+(\d{4})\s+used\s+at\s+(.+?)\s+for\s+(?:INR|Rs\.?)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+on\s+(\d{2}/\d{2}/\d{2,4})
+    HSBC\s+(?:creditcard|Credit\s+Card)\s+[xX*]+(\d{4})\s+used\s+at\s+(.+?)\s+for\s+(?:INR|Rs\.?)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+on\s+(\d{2}/\d{2}/\d{2,4})
   groups:
     card_last4: 1
     merchant: 2
@@ -20,11 +20,30 @@
         amount_paise: 32583
         card_last4: "7764"
         merchant: "Zomato"
-    - input: "HSBC creditcard xxxxx7764 used at amazonin for INR 1008.00 on 06/08/26.Limit Rs 483599.35 Due Rs 5400.65.Report fraud on +914061268002"
+    - input: "HSBC Credit Card xx7764 used at SHAWAYA PALACE for INR 1395.00 on 17/08/26. Avl limit INR 478214.65; due INR 10785.35. Call +914065118002 to report fraud."
       expected:
-        amount_paise: 100800
+        amount_paise: 139500
         card_last4: "7764"
-        merchant: "Amazon"
+        merchant: "Shawaya Palace"
+
+- id: hsbc_debit_card_spent
+  issuer: HSBC
+  card_type: debit
+  senders: ["HSBCIN", "HSBC"]
+  transaction_type: debit
+  regex: >-
+    HSBC:?Thank\s+you\s+for\s+using\s+HSBC\s+Debit\s+Card\s+[xX*]+(\d{4})\s+for\s+(?:INR|Rs\.?)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+on\s+(\d{1,2}[A-Za-z]{3})\s+at\s+(.+?)\s*(?:\.|\s+Your\s+available|\s+To\s+report)
+  groups:
+    card_last4: 1
+    amount: 2
+    txn_date: 3
+    merchant: 4
+  test_cases:
+    - input: "HSBC:Thank you for using HSBC Debit Card XXXXX8290 for INR 907.00 on 17AUG at BATA INDIA LIMITED .Your available bal is INR 2,094.00 .To report fraudulent transaction call 18002673456 (local) Or +914061268007 (overseas)."
+      expected:
+        amount_paise: 90700
+        card_last4: "8290"
+        merchant: "Bata India Limited"
 
 - id: hsbc_credit_spend
   issuer: HSBC
