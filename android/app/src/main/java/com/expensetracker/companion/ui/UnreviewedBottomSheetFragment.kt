@@ -55,6 +55,11 @@ class UnreviewedBottomSheetFragment : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         prefs = PreferencesManager(requireContext())
 
+        binding.btnViewIgnoredRules.setOnClickListener {
+            IgnoredRulesBottomSheetFragment.newInstance()
+                .show(parentFragmentManager, IgnoredRulesBottomSheetFragment.TAG)
+        }
+
         setupRecyclerView()
         loadUnreviewedTransactions()
     }
@@ -76,6 +81,9 @@ class UnreviewedBottomSheetFragment : BottomSheetDialogFragment() {
             },
             onMoreOptions = { txn, position ->
                 showMoreCategoriesDialog(txn, position)
+            },
+            onDismissNonTransactional = { txn, position ->
+                dismissNonTransactional(txn, position)
             }
         )
         binding.rvUnreviewed.layoutManager = LinearLayoutManager(requireContext())
@@ -159,6 +167,83 @@ class UnreviewedBottomSheetFragment : BottomSheetDialogFragment() {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to submit category: ${e.message}")
+            }
+        }
+    }
+
+    private fun dismissNonTransactional(txn: UnreviewedTransaction, position: Int) {
+        val serverUrl = prefs.serverUrl.trim().trimEnd('/')
+
+        // Optimistically remove from adapter
+        adapter.removeItemAt(position)
+        if (adapter.isEmpty()) {
+            binding.layoutEmptyState.visibility = View.VISIBLE
+            binding.rvUnreviewed.visibility = View.GONE
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val emptyBody = "{}".toRequestBody("application/json; charset=utf-8".toMediaType())
+                val request = Request.Builder()
+                    .url("$serverUrl/api/v1/categories/${txn.id}/dismiss-non-transactional")
+                    .post(emptyBody)
+                    .build()
+
+                httpClient.newCall(request).execute().use { response ->
+                    val body = response.body?.string()
+                    if (response.isSuccessful && body != null) {
+                        val json = Gson().fromJson(body, JsonObject::class.java)
+                        val ruleObj = json.getAsJsonObject("rule")
+                        val ruleId = ruleObj?.get("id")?.asInt
+                        val cascaded = json.get("cascaded_count")?.asInt ?: 0
+
+                        withContext(Dispatchers.Main) {
+                            val msg = if (cascaded > 0) {
+                                "Ignored ($cascaded matching also auto-dismissed)"
+                            } else {
+                                "Ignored • Learned rule for future messages"
+                            }
+                            val snack = Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG)
+                            if (ruleId != null) {
+                                snack.setAction("UNDO") {
+                                    undoIgnoreRule(ruleId)
+                                }
+                            }
+                            snack.show()
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            showSnackbar("Server rejected dismissal: HTTP ${response.code}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    showSnackbar("Network error: ${e.message}")
+                }
+            }
+        }
+    }
+
+    private fun undoIgnoreRule(ruleId: Int) {
+        val serverUrl = prefs.serverUrl.trim().trimEnd('/')
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url("$serverUrl/api/v1/categories/ignore-rules/$ruleId")
+                    .delete()
+                    .build()
+
+                httpClient.newCall(request).execute().use { response ->
+                    withContext(Dispatchers.Main) {
+                        if (response.isSuccessful) {
+                            showSnackbar("Ignore rule undone.")
+                            loadUnreviewedTransactions()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore network error on undo
             }
         }
     }

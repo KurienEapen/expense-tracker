@@ -97,6 +97,11 @@ class MainActivity : AppCompatActivity() {
             checkServerHealth()
         }
 
+        binding.btnOpenIgnoredRules.setOnClickListener {
+            IgnoredRulesBottomSheetFragment.newInstance()
+                .show(supportFragmentManager, IgnoredRulesBottomSheetFragment.TAG)
+        }
+
         // Hero outbox card actions
         binding.btnSyncNow.setOnClickListener {
             binding.btnSyncNow.isEnabled = false

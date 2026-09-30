@@ -10,7 +10,8 @@ import java.util.Locale
 class UnreviewedAdapter(
     private var items: MutableList<UnreviewedTransaction>,
     private val onCategorize: (transaction: UnreviewedTransaction, category: String, position: Int) -> Unit,
-    private val onMoreOptions: (transaction: UnreviewedTransaction, position: Int) -> Unit
+    private val onMoreOptions: (transaction: UnreviewedTransaction, position: Int) -> Unit,
+    private val onDismissNonTransactional: (transaction: UnreviewedTransaction, position: Int) -> Unit
 ) : RecyclerView.Adapter<UnreviewedAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemUnreviewedTransactionBinding) : RecyclerView.ViewHolder(binding.root)
@@ -65,6 +66,11 @@ class UnreviewedAdapter(
         }
         binding.chipMore.setOnClickListener {
             onMoreOptions(item, holder.adapterPosition)
+        }
+
+        // Dismiss action: Not an Expense
+        binding.btnDismissNonTransactional.setOnClickListener {
+            onDismissNonTransactional(item, holder.adapterPosition)
         }
     }
 

@@ -14,6 +14,12 @@ def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
     Parses a single RawMessage, upserts the corresponding Transaction record,
     and applies multi-tier auto-categorization.
     """
+    from app.categorizer.ignore_service import check_if_message_ignored
+    ignored_rule = check_if_message_ignored(db, raw.body, raw.sender)
+    if ignored_rule:
+        logger.info(f"RawMessage #{raw.id} skipped by IgnoreRule #{ignored_rule.id}: {ignored_rule.description}")
+        return None
+
     parsed = parse_message(raw.sender, raw.body, raw.received_at_utc)
     if not parsed:
         return None

@@ -66,7 +66,7 @@ def list_transactions(
     """
     Lists parsed transactions with optional filtering and pagination.
     """
-    query = db.query(Transaction)
+    query = db.query(Transaction).filter(Transaction.status != "ignored")
     if issuer:
         query = query.filter(Transaction.issuer.ilike(f"%{issuer}%"))
     if card_last4:
