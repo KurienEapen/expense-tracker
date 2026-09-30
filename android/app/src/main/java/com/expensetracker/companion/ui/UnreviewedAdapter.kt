@@ -34,6 +34,19 @@ class UnreviewedAdapter(
         binding.tvAmount.text = String.format(Locale.getDefault(), "₹%.2f", item.amountInr)
         binding.tvMeta.text = item.displayMeta
 
+        // Original Raw SMS Context Box
+        if (!item.rawBody.isNullOrBlank()) {
+            binding.cardRawSms.visibility = android.view.View.VISIBLE
+            binding.tvRawBody.text = item.rawBody.trim()
+            if (!item.rawSender.isNullOrBlank()) {
+                binding.tvRawSender.text = "ORIGINAL SMS • ${item.rawSender}"
+            } else {
+                binding.tvRawSender.text = "ORIGINAL BANK SMS"
+            }
+        } else {
+            binding.cardRawSms.visibility = android.view.View.GONE
+        }
+
         // Reset click listeners on chips
         binding.chipDining.setOnClickListener {
             onCategorize(item, "Dining", holder.adapterPosition)

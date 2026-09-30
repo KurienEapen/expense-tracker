@@ -1,12 +1,15 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, BigInteger, String, Text, DateTime, Float, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 from app.core.database import Base
+from app.models.raw_message import RawMessage
 
 class Transaction(Base):
     __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     raw_message_id = Column(Integer, ForeignKey("raw_messages.id"), nullable=True, index=True)
+    raw_message = relationship("RawMessage", foreign_keys=[raw_message_id])
     source = Column(String(32), default="sms", nullable=False)  # sms | notification | manual | import
     issuer = Column(String(32), nullable=False, index=True)      # HDFC | ICICI | SBI | Axis | Scapia | Jupiter | HSBC | Unknown
     card_type = Column(String(32), default="credit", nullable=False)  # credit | debit | upi | account

@@ -27,6 +27,8 @@ class TransactionResponse(BaseModel):
     parsed_by_template_id: Optional[str]
     parser_confidence: float
     status: str
+    raw_body: Optional[str] = None
+    raw_sender: Optional[str] = None
 
     @classmethod
     def from_orm_model(cls, t: Transaction) -> "TransactionResponse":
@@ -48,6 +50,8 @@ class TransactionResponse(BaseModel):
             parsed_by_template_id=t.parsed_by_template_id,
             parser_confidence=t.parser_confidence,
             status=t.status,
+            raw_body=t.raw_message.body if t.raw_message else None,
+            raw_sender=t.raw_message.sender if t.raw_message else None,
         )
 
 @router.get("", response_model=List[TransactionResponse])

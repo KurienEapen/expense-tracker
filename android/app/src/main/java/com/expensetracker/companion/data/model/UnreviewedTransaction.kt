@@ -10,7 +10,9 @@ data class UnreviewedTransaction(
     @SerializedName("issuer") val issuer: String?,
     @SerializedName("card_type") val cardType: String?,
     @SerializedName("card_last4") val cardLast4: String?,
-    @SerializedName("transacted_at_utc") val transactedAtUtc: String?
+    @SerializedName("transacted_at_utc") val transactedAtUtc: String?,
+    @SerializedName("raw_body") val rawBody: String?,
+    @SerializedName("raw_sender") val rawSender: String?
 ) {
     val displayMerchant: String
         get() = merchantClean?.ifBlank { null } ?: merchantRaw?.ifBlank { null } ?: "Unknown Merchant"
