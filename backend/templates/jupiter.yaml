@@ -1,0 +1,44 @@
+# CSB Bank (Jupiter Co-brand) — SMS Parser Templates
+# Covers: Jupiter Edge CSB credit card (cashback focused)
+# Normalized senders: JUPITR, JUPITE, CSBANK
+
+- id: jupiter_credit_spend
+  issuer: Jupiter
+  card_type: credit
+  senders: ["JUPITR", "JUPITE", "CSBANK"]
+  transaction_type: debit
+  regex: >-
+    (?:Rs\.?|INR|₹)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+(?:spent|debited|charged)\s+(?:on|from|at)\s+(?:your\s+)?(?:Jupiter\s+)?(?:Edge\s+)?(?:CSB\s+)?(?:Credit\s+)?Card\s+[xX*]+(\d{4})(?:\s+at\s+(.+?))?[\.\!]
+  groups:
+    amount: 1
+    card_last4: 2
+    merchant: 3
+  test_cases:
+    - input: "Rs.450.00 spent on your Jupiter Edge CSB Credit Card xx7890 at BLINKIT."
+      expected:
+        amount_paise: 45000
+        card_last4: "7890"
+        merchant: "BLINKIT"
+    - input: "INR 2,300.00 debited on Jupiter Card xx7890 at MYNTRA."
+      expected:
+        amount_paise: 230000
+        card_last4: "7890"
+        merchant: "MYNTRA"
+
+- id: jupiter_cashback_credit
+  issuer: Jupiter
+  card_type: credit
+  senders: ["JUPITR", "JUPITE", "CSBANK"]
+  transaction_type: credit
+  category_override: "Rewards & Cashback"
+  regex: >-
+    (?:Cashback|Jewel|Reward)\s+of\s+(?:Rs\.?|INR|₹)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+(?:credited|earned|applied)\s+(?:to|on)\s+(?:your\s+)?(?:Jupiter\s+)?(?:Edge\s+)?Card\s+[xX*]+(\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+  test_cases:
+    - input: "Cashback of Rs.32.00 credited to your Jupiter Edge Card xx7890."
+      expected:
+        amount_paise: 3200
+        card_last4: "7890"
+        category_override: "Rewards & Cashback"

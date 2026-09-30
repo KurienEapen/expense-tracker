@@ -1,0 +1,56 @@
+# Axis Bank (Indian Oil Co-brand) — SMS Parser Templates
+# Covers: Axis Bank Indian Oil credit card (fuel surcharge waiver)
+# Normalized senders: AXISBK, AXISBKCC, AXISBN
+
+- id: axis_credit_spend
+  issuer: Axis
+  card_type: credit
+  senders: ["AXISBK", "AXISBKCC"]
+  transaction_type: debit
+  regex: >-
+    INR\s+([0-9,]+(?:\.[0-9]{1,2})?)\s+spent\s+on\s+Axis\s+\w+\s+Card\s+ending\s+(\d{4})\s+at\s+(.+?)\s+on\s+(\d{2}-\d{2}-\d{4}|\d{2}/\d{2}/\d{4}|\d{2}-\w{3}-\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+    merchant: 3
+    txn_date: 4
+  test_cases:
+    - input: "INR 2,000.00 spent on Axis IOCL Card ending 1122 at INDIAN OIL CORP on 29-09-2026. Surcharge waiver eligible."
+      expected:
+        amount_paise: 200000
+        card_last4: "1122"
+        merchant: "INDIAN OIL CORP"
+
+- id: axis_fuel_surcharge_waiver
+  issuer: Axis
+  card_type: credit
+  senders: ["AXISBK", "AXISBKCC"]
+  transaction_type: surcharge_waiver
+  regex: >-
+    (?:Fuel\s+surcharge\s+waiver|Surcharge\s+waiver)\s+of\s+(?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+(?:applied|credited|reversed)\s+(?:on|to)\s+(?:your\s+)?(?:Axis\s+)?(?:IOCL\s+)?Card\s+[xX*]+(\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+  category_override: "Fuel"
+  test_cases:
+    - input: "Fuel surcharge waiver of Rs.40.00 applied on your Axis IOCL Card xx1122."
+      expected:
+        amount_paise: 4000
+        card_last4: "1122"
+        category_override: "Fuel"
+
+- id: axis_credit_general
+  issuer: Axis
+  card_type: credit
+  senders: ["AXISBK", "AXISBKCC"]
+  transaction_type: debit
+  regex: >-
+    (?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+(?:debited|charged)\s+(?:from|on)\s+(?:your\s+)?Axis\s+Bank\s+(?:Credit\s+)?(?:Card|A/c)\s+[xX*]+(\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+  test_cases:
+    - input: "Rs.1,500.00 debited from your Axis Bank Credit Card xx1122."
+      expected:
+        amount_paise: 150000
+        card_last4: "1122"

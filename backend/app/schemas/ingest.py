@@ -23,3 +23,4 @@ class IngestResponse(BaseModel):
     status: Literal["stored", "duplicate"]
     raw_id: Optional[int] = None
     message: Optional[str] = None
+    parsed_transaction_id: Optional[int] = None

@@ -1,0 +1,43 @@
+# SBI Card — SMS Parser Templates
+# Covers: SBI Credit Card
+# Normalized senders: SBICRD, SBIINB, SBICARD
+
+- id: sbi_credit_spend
+  issuer: SBI
+  card_type: credit
+  senders: ["SBICRD", "SBICARD"]
+  transaction_type: debit
+  regex: >-
+    (?:Your\s+)?SBI\s+Credit\s+Card\s+(?:ending\s+|no\.?\s+)?(\d{4})\s+was\s+used\s+for\s+(?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+at\s+(.+?)\s+on\s+(\d{2}-\w{3}-\d{4}|\d{2}-\d{2}-\d{4}|\d{2}/\d{2}/\d{4})
+  groups:
+    card_last4: 1
+    amount: 2
+    merchant: 3
+    txn_date: 4
+  test_cases:
+    - input: "Your SBI Credit Card ending 7654 was used for Rs 4,500.00 at RELIANCE DIGITAL on 29-Sep-2026."
+      expected:
+        amount_paise: 450000
+        card_last4: "7654"
+        merchant: "RELIANCE DIGITAL"
+    - input: "SBI Credit Card no. 1234 was used for Rs 850.00 at DOMINOS on 15-Aug-2026."
+      expected:
+        amount_paise: 85000
+        card_last4: "1234"
+        merchant: "DOMINOS"
+
+- id: sbi_credit_reward
+  issuer: SBI
+  card_type: credit
+  senders: ["SBICRD", "SBICARD"]
+  transaction_type: credit
+  regex: >-
+    (?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+(?:reward\s+points?|cashback)\s+(?:credited|earned)\s+(?:on|to)\s+(?:your\s+)?SBI\s+Card\s+(\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+  test_cases:
+    - input: "Rs 100 reward points credited on your SBI Card 7654. Keep spending!"
+      expected:
+        amount_paise: 10000
+        card_last4: "7654"

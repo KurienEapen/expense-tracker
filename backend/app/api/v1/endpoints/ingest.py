@@ -8,6 +8,7 @@ from app.models.device import Device
 from app.models.raw_message import RawMessage
 from app.schemas.ingest import IngestPayload, IngestResponse
 from app.core.security import compute_idempotency_key
+from app.parser.reparse import reparse_raw_message
 
 router = APIRouter()
 
@@ -60,9 +61,13 @@ def ingest_message(
     db.add(raw_message)
     db.commit()
     db.refresh(raw_message)
+
+    # 5. Automatically parse message into Transaction record
+    txn = reparse_raw_message(db, raw_message)
     
     return IngestResponse(
         status="stored",
         raw_id=raw_message.id,
-        message="Successfully ingested raw message"
+        parsed_transaction_id=txn.id if txn else None,
+        message="Successfully ingested and parsed raw message"
     )

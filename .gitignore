@@ -9,13 +9,19 @@ htmlcov/
 *.sqlite
 *.sqlite3
 *.db
+*.db-shm
+*.db-wal
 *.log
 .env
 .DS_Store
 
-# Android build outputs
+# Android build outputs & local config
 android/.gradle/
 android/build/
 android/app/build/
+android/local.properties
+android/.idea/
+.idea/
 *.apk
 *.aab
+

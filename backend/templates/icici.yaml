@@ -1,0 +1,58 @@
+# ICICI Bank — SMS Parser Templates
+# Covers: ICICI Credit Cards, ICICI Debit Card
+# Normalized senders: ICICIB, ICICIBN, ICINBK
+
+- id: icici_credit_debit_spend
+  issuer: ICICI
+  card_type: credit
+  senders: ["ICICIB", "ICICIBN"]
+  transaction_type: debit
+  regex: >-
+    (?:Dear\s+Customer,?\s+)?INR\s+([0-9,]+(?:\.[0-9]{1,2})?)\s+debited\s+from\s+ICICI\s+Bank\s+(?:Credit\s+)?Card\s+(?:XX|xx|\*{4})(\d{4})\s+at\s+(.+?)[\.\!]
+  groups:
+    amount: 1
+    card_last4: 2
+    merchant: 3
+  test_cases:
+    - input: "Dear Customer, INR 320.00 debited from ICICI Bank Card XX8910 at BLUE TOKAI COFFEE."
+      expected:
+        amount_paise: 32000
+        card_last4: "8910"
+        merchant: "BLUE TOKAI COFFEE"
+    - input: "INR 1,200.00 debited from ICICI Bank Credit Card XX5678 at AMAZON."
+      expected:
+        amount_paise: 120000
+        card_last4: "5678"
+        merchant: "AMAZON"
+
+- id: icici_debit_upi
+  issuer: ICICI
+  card_type: debit
+  senders: ["ICICIB", "ICICIBN"]
+  transaction_type: debit
+  regex: >-
+    INR\s+([0-9,]+(?:\.[0-9]{1,2})?)\s+(?:transferred|sent|debited)\s+(?:from|via)\s+(?:your\s+)?(?:ICICI\s+Bank\s+)?(?:A/c|account)[\s\w]*[xX*]+(\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+  test_cases:
+    - input: "INR 500.00 transferred from your ICICI Bank A/c xx1234 via UPI."
+      expected:
+        amount_paise: 50000
+        card_last4: "1234"
+
+- id: icici_credit_received
+  issuer: ICICI
+  card_type: credit
+  senders: ["ICICIB", "ICICIBN"]
+  transaction_type: credit
+  regex: >-
+    INR\s+([0-9,]+(?:\.[0-9]{1,2})?)\s+credited\s+to\s+(?:your\s+)?ICICI\s+Bank\s+(?:Card\s+)?(?:XX|xx)(\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+  test_cases:
+    - input: "INR 5,000.00 credited to your ICICI Bank Card XX5678. Thank you."
+      expected:
+        amount_paise: 500000
+        card_last4: "5678"

@@ -1,0 +1,42 @@
+# Federal Bank (Scapia Co-brand) — SMS Parser Templates
+# Covers: Federal Bank Scapia credit card (travel focused)
+# Normalized senders: FEDBNK, SCAPIA, FEDERALB
+
+- id: scapia_credit_spend
+  issuer: Scapia
+  card_type: credit
+  senders: ["FEDBNK", "SCAPIA", "FEDERALB"]
+  transaction_type: debit
+  regex: >-
+    (?:Rs\.?|INR|₹)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+(?:spent|debited|used)\s+(?:on|from|via)\s+(?:your\s+)?Scapia\s+(?:Federal\s+)?(?:Credit\s+)?Card\s+[xX*]+(\d{4})(?:\s+at\s+(.+?))?[\.\!]
+  groups:
+    amount: 1
+    card_last4: 2
+    merchant: 3
+  test_cases:
+    - input: "Rs.1,200.00 spent on your Scapia Federal Credit Card xx3456 at CLEARTRIP."
+      expected:
+        amount_paise: 120000
+        card_last4: "3456"
+        merchant: "CLEARTRIP"
+    - input: "INR 550.00 debited from Scapia Card xx3456 at ZOMATO."
+      expected:
+        amount_paise: 55000
+        card_last4: "3456"
+        merchant: "ZOMATO"
+
+- id: federal_generic_spend
+  issuer: Federal
+  card_type: credit
+  senders: ["FEDBNK", "FEDERALB"]
+  transaction_type: debit
+  regex: >-
+    (?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+(?:debited|spent)\s+(?:from|on)\s+(?:your\s+)?Federal\s+Bank\s+(?:Credit\s+)?Card\s+[xX*]+(\d{4})
+  groups:
+    amount: 1
+    card_last4: 2
+  test_cases:
+    - input: "Rs.800.00 debited from your Federal Bank Credit Card xx3456."
+      expected:
+        amount_paise: 80000
+        card_last4: "3456"

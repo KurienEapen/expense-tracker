@@ -2,13 +2,22 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.database import Base, engine, SessionLocal
+from app.models import *  # Ensure all SQLAlchemy models are registered
 from app.api.v1.router import api_router
+from app.parser.registry import get_registry
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure all tables exist on startup
     Base.metadata.create_all(bind=engine)
+    # Seed/sync YAML parser templates to SQLite
+    db = SessionLocal()
+    try:
+        registry = get_registry()
+        registry.sync_to_db(db)
+    finally:
+        db.close()
     yield
 
 app = FastAPI(
