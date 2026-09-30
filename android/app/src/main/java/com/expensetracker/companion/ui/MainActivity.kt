@@ -20,7 +20,10 @@ import com.expensetracker.companion.data.SmsBackfillHelper
 import com.expensetracker.companion.data.local.AppDatabase
 import com.expensetracker.companion.databinding.ActivityMainBinding
 import com.expensetracker.companion.worker.OutboxWorker
+import com.expensetracker.companion.data.model.UnreviewedTransaction
 import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,11 +63,13 @@ class MainActivity : AppCompatActivity() {
         initViews()
         observeOutbox()
         checkServerHealth()
+        fetchUnreviewedCount()
     }
 
     override fun onResume() {
         super.onResume()
         updatePermissionTiles()
+        fetchUnreviewedCount()
     }
 
     private fun initViews() {
@@ -110,6 +115,7 @@ class MainActivity : AppCompatActivity() {
                 binding.btnSyncNow.isEnabled = true
                 if (synced > 0) {
                     showSnackbar("Successfully synced $synced message${if (synced > 1) "s" else ""} to server!")
+                    fetchUnreviewedCount()
                 } else {
                     showSnackbar("Sync failed — please check if server is reachable.", isError = true)
                 }
@@ -120,9 +126,18 @@ class MainActivity : AppCompatActivity() {
             checkServerHealth()
         }
 
+        // In-App Ambiguity Review card actions
+        binding.cardUnreviewedReview.setOnClickListener {
+            openReviewBottomSheet()
+        }
+        binding.btnOpenReview.setOnClickListener {
+            openReviewBottomSheet()
+        }
+
         // Pull-to-refresh
         binding.swipeRefresh.setOnRefreshListener {
             checkServerHealth()
+            fetchUnreviewedCount()
             binding.swipeRefresh.isRefreshing = false
         }
 
@@ -205,6 +220,7 @@ class MainActivity : AppCompatActivity() {
                                 ContextCompat.getColor(this@MainActivity, R.color.status_healthy)
                             )
                             binding.tvServerBadge.setBackgroundResource(R.drawable.badge_pill_healthy)
+                            fetchUnreviewedCount()
                         } else {
                             binding.tvServerBadge.text = "HTTP ${response.code}"
                             binding.tvServerBadge.setTextColor(
@@ -222,6 +238,58 @@ class MainActivity : AppCompatActivity() {
                     )
                     binding.tvServerBadge.setBackgroundResource(R.drawable.badge_pill_error)
                 }
+            }
+        }
+    }
+
+    private fun openReviewBottomSheet() {
+        val sheet = UnreviewedBottomSheetFragment.newInstance()
+        sheet.onDismissCallback = {
+            fetchUnreviewedCount()
+        }
+        sheet.show(supportFragmentManager, UnreviewedBottomSheetFragment.TAG)
+    }
+
+    private fun fetchUnreviewedCount() {
+        val serverUrl = prefs.serverUrl.trim().trimEnd('/')
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url("$serverUrl/api/v1/categories/unreviewed?limit=100")
+                    .get()
+                    .build()
+
+                httpClient.newCall(request).execute().use { response ->
+                    val body = response.body?.string()
+                    if (response.isSuccessful && body != null) {
+                        val type = object : TypeToken<List<UnreviewedTransaction>>() {}.type
+                        val list: List<UnreviewedTransaction> = Gson().fromJson(body, type)
+                        val count = list.size
+
+                        withContext(Dispatchers.Main) {
+                            binding.tvUnreviewedLargeCount.text = count.toString()
+                            if (count > 0) {
+                                binding.tvUnreviewedBadge.text = "$count Pending"
+                                binding.tvUnreviewedBadge.setTextColor(
+                                    ContextCompat.getColor(this@MainActivity, R.color.status_warning)
+                                )
+                                binding.tvUnreviewedBadge.setBackgroundResource(R.drawable.badge_pill_warning)
+                                binding.tvUnreviewedSubtitle.text = "$count ambiguous expense${if (count > 1) "s" else ""} need quick 1-tap review"
+                                binding.btnOpenReview.text = "Review Now ($count)"
+                            } else {
+                                binding.tvUnreviewedBadge.text = "All Caught Up"
+                                binding.tvUnreviewedBadge.setTextColor(
+                                    ContextCompat.getColor(this@MainActivity, R.color.status_healthy)
+                                )
+                                binding.tvUnreviewedBadge.setBackgroundResource(R.drawable.badge_pill_healthy)
+                                binding.tvUnreviewedSubtitle.text = "All transactions automatically categorized"
+                                binding.btnOpenReview.text = "View Review Tray"
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Silently skip if network unreachable
             }
         }
     }

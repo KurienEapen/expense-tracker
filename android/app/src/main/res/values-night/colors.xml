@@ -8,6 +8,7 @@
     
     <color name="surface">#111318</color>
     <color name="surface_variant">#1E2024</color>
+    <color name="surface_container">#1A1C20</color>
     <color name="surface_container_highest">#2B2D33</color>
     <color name="background">#0B0D11</color>
     
