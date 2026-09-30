@@ -94,8 +94,26 @@ class MainActivity : AppCompatActivity() {
 
         // Hero outbox card actions
         binding.btnSyncNow.setOnClickListener {
-            OutboxWorker.enqueue(this)
-            showSnackbar("Outbox sync enqueued — messages will deliver when network is available.")
+            binding.btnSyncNow.isEnabled = false
+            lifecycleScope.launch {
+                val db = AppDatabase.getDatabase(this@MainActivity)
+                val count = withContext(Dispatchers.IO) { db.outboxDao().getPendingCount() }
+                if (count == 0) {
+                    showSnackbar("Outbox is empty — tap 'Backfill' below to scan recent bank SMS.")
+                    binding.btnSyncNow.isEnabled = true
+                    return@launch
+                }
+                showSnackbar("Syncing $count message${if (count > 1) "s" else ""} to server...")
+                val synced = withContext(Dispatchers.IO) {
+                    OutboxWorker.syncOutboxDirect(this@MainActivity)
+                }
+                binding.btnSyncNow.isEnabled = true
+                if (synced > 0) {
+                    showSnackbar("Successfully synced $synced message${if (synced > 1) "s" else ""} to server!")
+                } else {
+                    showSnackbar("Sync failed — please check if server is reachable.", isError = true)
+                }
+            }
         }
 
         binding.btnCheckServer.setOnClickListener {
