@@ -307,9 +307,8 @@ function renderTransactionRow(t, showAction) {
       </div>
     `;
   } else if (isSplittable) {
-    const initialDisplay = isHighLikelihoodSplit ? 'inline-flex' : 'none';
     splitBadgeHtml = `
-      <div id="splitChips_${t.id}" style="display:${initialDisplay}; align-items:center; gap:3px; margin-top:3px;">
+      <div id="splitChips_${t.id}" style="display:none; align-items:center; gap:3px; margin-top:3px;">
         <span style="font-size:10px; font-weight:600; color:var(--text-muted); letter-spacing:0.03em;">SPLIT:</span>
         <button onclick="splitTransactionPreset(${t.id}, '1/2', ${t.amount_inr})" class="btn-icon" style="height:18px; padding:0 5px; font-size:10px; border-radius:3px;" title="Split 50/50">½</button>
         <button onclick="splitTransactionPreset(${t.id}, '1/3', ${t.amount_inr})" class="btn-icon" style="height:18px; padding:0 5px; font-size:10px; border-radius:3px;" title="Split 1/3">⅓</button>
@@ -317,6 +316,7 @@ function renderTransactionRow(t, showAction) {
       </div>
     `;
   }
+
 
   let actionButtonsHtml = '';
   if (isSplittable && !t.is_split) {
@@ -371,7 +371,7 @@ function renderMobileTransactionCard(t) {
     `;
   } else if (isSplittable) {
     splitControlsHtml = `
-      <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
+      <div id="splitChips_mob_${t.id}" style="display:none; align-items:center; gap:6px; margin-top:6px;">
         <span style="font-size:11px; color:var(--text-muted);">Split:</span>
         <button onclick="splitTransactionPreset(${t.id}, '1/2', ${t.amount_inr})" class="chip" style="min-height:22px; padding:2px 8px; font-size:10px;">½ Split</button>
         <button onclick="splitTransactionPreset(${t.id}, '1/3', ${t.amount_inr})" class="chip" style="min-height:22px; padding:2px 8px; font-size:10px;">⅓ Split</button>
@@ -380,6 +380,9 @@ function renderMobileTransactionCard(t) {
     `;
   }
 
+  const mobScissorBtn = (isSplittable && !t.is_split)
+    ? `<button style="background:none; border:none; cursor:pointer; font-size:12px; padding:0 4px;" onclick="toggleTxnSplitControls(${t.id})" title="Split Expense">✂️</button>`
+    : '';
 
   return `
     <div class="mobile-txn-card">
@@ -394,12 +397,14 @@ function renderMobileTransactionCard(t) {
         <div class="mobile-txn-tags">
           <span class="chip" style="min-height:24px; padding:2px 8px; font-size:11px;">${escapeHtml(categoryStr)}</span>
           <span class="issuer-badge">${escapeHtml(issuerStr)}</span>
+          ${mobScissorBtn}
         </div>
         <span>${dateFormatted}</span>
       </div>
       ${splitControlsHtml}
     </div>
   `;
+
 }
 
 async function loadUnreviewedQueue() {
