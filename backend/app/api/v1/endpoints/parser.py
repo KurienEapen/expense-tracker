@@ -60,6 +60,59 @@ def test_parse(payload: TestParseRequest):
     """
     return parse_message(sender=payload.sender, body=payload.body)
 
+class CreateTemplateRequest(BaseModel):
+    template_id: str
+    issuer: str
+    senders: List[str]
+    regex: str
+    transaction_type: str = "debit"
+    card_type: str = "credit"
+    amount_group: int = 1
+    merchant_group: Optional[int] = None
+    card_last4_group: Optional[int] = None
+
+@router.post("/templates/create")
+def create_custom_template(payload: CreateTemplateRequest, db: Session = Depends(get_db)):
+    """
+    Creates and saves a new custom YAML parser template.
+    All future matching messages will automatically be parsed with 100% confidence.
+    """
+    import yaml
+    from app.parser.registry import TEMPLATES_DIR, get_registry
+    
+    custom_yaml_path = TEMPLATES_DIR / "custom_user_templates.yaml"
+    existing_data = []
+    if custom_yaml_path.exists():
+        with open(custom_yaml_path, "r", encoding="utf-8") as f:
+            existing_data = yaml.safe_load(f) or []
+    
+    groups = {"amount": payload.amount_group}
+    if payload.merchant_group:
+        groups["merchant"] = payload.merchant_group
+    if payload.card_last4_group:
+        groups["card_last4"] = payload.card_last4_group
+
+    new_template = {
+        "id": payload.template_id,
+        "issuer": payload.issuer,
+        "card_type": payload.card_type,
+        "senders": payload.senders,
+        "transaction_type": payload.transaction_type,
+        "regex": payload.regex,
+        "groups": groups
+    }
+    
+    existing_data.append(new_template)
+    with open(custom_yaml_path, "w", encoding="utf-8") as f:
+        yaml.dump(existing_data, f, sort_keys=False)
+
+    registry = get_registry()
+    registry.load_from_yaml()
+    registry.sync_to_db(db)
+    reparse_all(db)
+
+    return {"status": "success", "message": f"Successfully registered template '{payload.template_id}'. Future matching transactions will be parsed automatically."}
+
 @router.post("/reparse", response_model=ReparseResponse)
 def trigger_reparse(
     limit: Optional[int] = Query(None, description="Max messages to reparse"),
@@ -70,6 +123,7 @@ def trigger_reparse(
     """
     stats = reparse_all(db, limit=limit)
     return ReparseResponse(**stats)
+
 
 from fastapi import UploadFile, File
 import csv
