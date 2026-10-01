@@ -257,6 +257,19 @@ function renderTransactionRow(t, showAction) {
   const isEligibleCategory = !nonSplittable.includes(categoryStr);
   const isSplittable = !isCredit && isEligibleCategory && (t.amount_inr > 0);
 
+  // Smart Heuristic Classifier for high-likelihood split candidate expenses
+  const amt = t.amount_inr || 0;
+  const catLower = categoryStr.toLowerCase();
+  let isHighLikelihoodSplit = false;
+
+  if (catLower.includes('food') || catLower.includes('dining') || catLower.includes('restaurant') || catLower.includes('cafe')) {
+    if (amt >= 350) isHighLikelihoodSplit = true; // Dining >= Rs 350
+  } else if (catLower.includes('travel') || catLower.includes('entertainment') || catLower.includes('movie') || catLower.includes('hotel')) {
+    if (amt >= 500) isHighLikelihoodSplit = true; // Travel / Events / Outings >= Rs 500
+  } else if (catLower.includes('grocery') || catLower.includes('shopping')) {
+    if (amt >= 1000) isHighLikelihoodSplit = true; // Shared Groceries / Shopping >= Rs 1000
+  }
+
   let splitBadgeHtml = '';
   if (t.is_split) {
     const myShareFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(t.my_share_inr);
@@ -268,8 +281,9 @@ function renderTransactionRow(t, showAction) {
       </div>
     `;
   } else if (isSplittable) {
+    const initialDisplay = isHighLikelihoodSplit ? 'inline-flex' : 'none';
     splitBadgeHtml = `
-      <div style="display:inline-flex; align-items:center; gap:3px; margin-top:3px;">
+      <div id="splitChips_${t.id}" style="display:${initialDisplay}; align-items:center; gap:3px; margin-top:3px;">
         <span style="font-size:10px; font-weight:600; color:var(--text-muted); letter-spacing:0.03em;">SPLIT:</span>
         <button onclick="splitTransactionPreset(${t.id}, '1/2', ${t.amount_inr})" class="btn-icon" style="height:18px; padding:0 5px; font-size:10px; border-radius:3px;" title="Split 50/50">½</button>
         <button onclick="splitTransactionPreset(${t.id}, '1/3', ${t.amount_inr})" class="btn-icon" style="height:18px; padding:0 5px; font-size:10px; border-radius:3px;" title="Split 1/3">⅓</button>
@@ -278,6 +292,13 @@ function renderTransactionRow(t, showAction) {
     `;
   }
 
+  let actionButtonsHtml = '';
+  if (isSplittable && !t.is_split) {
+    actionButtonsHtml += `<button class="btn-icon-only" style="width:28px; height:28px; border-radius:4px; padding:0; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border-subtle); background:var(--bg-app); cursor:pointer; font-size:12px;" onclick="toggleTxnSplitControls(${t.id})" title="Split Expense">✂️</button>`;
+  }
+  if (showAction) {
+    actionButtonsHtml += `<button class="btn-icon-only" style="width:28px; height:28px; margin-left:4px;" onclick="dismissTxnDirect(${t.id})" title="Dismiss as Non-Expense"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>`;
+  }
 
   return `
     <tr>
@@ -290,9 +311,10 @@ function renderTransactionRow(t, showAction) {
       <td><span class="issuer-badge">${escapeHtml(issuerStr)}</span></td>
       <td style="font-size:12px; color:var(--text-muted);">${dateFormatted}</td>
       <td class="amount-text">${totalAmountFormatted}</td>
-      ${showAction ? `<td><button class="btn-icon-only" style="width:32px; height:32px;" onclick="dismissTxnDirect(${t.id})" title="Dismiss as Non-Expense"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></td>` : ''}
+      <td>${actionButtonsHtml}</td>
     </tr>
   `;
+
 }
 
 function renderMobileTransactionCard(t) {
@@ -870,6 +892,14 @@ function renderCategoryMatrix(monthlyMatrix) {
       </div>
     `;
   }).join('');
+}
+
+function toggleTxnSplitControls(txnId) {
+  const el = document.getElementById(`splitChips_${txnId}`);
+  if (el) {
+    const isHidden = el.style.display === 'none' || !el.style.display;
+    el.style.display = isHidden ? 'inline-flex' : 'none';
+  }
 }
 
 async function splitTransactionPreset(txnId, ratioLabel, totalInr) {
