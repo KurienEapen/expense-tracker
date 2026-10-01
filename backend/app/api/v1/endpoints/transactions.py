@@ -40,6 +40,8 @@ class TransactionResponse(BaseModel):
     location_address: Optional[str] = None
     raw_body: Optional[str] = None
     raw_sender: Optional[str] = None
+    tags: List[str] = []
+    tag_details: List[dict] = []
 
     @classmethod
     def from_orm_model(cls, t: Transaction) -> "TransactionResponse":
@@ -73,6 +75,8 @@ class TransactionResponse(BaseModel):
             location_address=getattr(t, 'location_address', None),
             raw_body=t.raw_message.body if t.raw_message else None,
             raw_sender=t.raw_message.sender if t.raw_message else None,
+            tags=[tg.name for tg in t.tags] if getattr(t, 'tags', None) else [],
+            tag_details=[{"id": tg.id, "name": tg.name, "color": tg.color, "icon": tg.icon} for tg in t.tags] if getattr(t, 'tags', None) else [],
         )
 
 class CategoryStat(BaseModel):
@@ -106,6 +110,7 @@ def list_transactions(
     card_last4: Optional[str] = Query(None, description="Filter by card last 4 digits"),
     transaction_type: Optional[str] = Query(None, description="debit | credit | surcharge_waiver"),
     category: Optional[str] = Query(None, description="Filter by category"),
+    tag: Optional[str] = Query(None, description="Filter by tag name (e.g. Goa Trip)"),
     search: Optional[str] = Query(None, description="Search merchant or notes"),
     needs_review: Optional[bool] = Query(None, description="Filter by needs_review status"),
     limit: int = Query(50, ge=1, le=200),
@@ -115,6 +120,7 @@ def list_transactions(
     """
     Lists parsed transactions with optional filtering and pagination.
     """
+    from app.models.tag import Tag
     query = db.query(Transaction).filter(Transaction.status != "ignored")
     if issuer:
         query = query.filter(Transaction.issuer.ilike(f"%{issuer}%"))
@@ -124,6 +130,9 @@ def list_transactions(
         query = query.filter(Transaction.transaction_type == transaction_type)
     if category:
         query = query.filter(Transaction.category == category)
+    if tag:
+        clean_tag = tag.strip().lstrip("#")
+        query = query.filter(Transaction.tags.any(Tag.name.ilike(clean_tag)))
     if needs_review is not None:
         query = query.filter(Transaction.needs_review == needs_review)
     if search:
@@ -352,3 +361,49 @@ def unsplit_transaction(
     db.commit()
     db.refresh(txn)
     return TransactionResponse.from_orm_model(txn)
+
+class TagAttachRequest(BaseModel):
+    tag_name: Optional[str] = None
+    tag_id: Optional[int] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+
+@router.post("/{txn_id}/tags", response_model=TransactionResponse)
+def attach_tag_to_transaction_endpoint(
+    txn_id: int,
+    payload: TagAttachRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Attaches a tag to a transaction by name or ID.
+    """
+    from app.services.tag_service import attach_tag_to_transaction
+    from typing import Union
+    identifier: Union[int, str, None] = payload.tag_id if payload.tag_id is not None else payload.tag_name
+    if not identifier:
+        raise HTTPException(status_code=400, detail="tag_name or tag_id is required")
+    try:
+        attach_tag_to_transaction(db, txn_id=txn_id, tag_name_or_id=identifier, color=payload.color, icon=payload.icon)
+        txn = db.query(Transaction).filter(Transaction.id == txn_id).first()
+        return TransactionResponse.from_orm_model(txn)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.delete("/{txn_id}/tags/{tag_name_or_id}", response_model=TransactionResponse)
+def detach_tag_from_transaction_endpoint(
+    txn_id: int,
+    tag_name_or_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Removes a tag from a transaction and records an exclusion so auto-tagging will not re-add it.
+    """
+    from app.services.tag_service import detach_tag_from_transaction
+    from typing import Union
+    identifier: Union[int, str] = int(tag_name_or_id) if tag_name_or_id.isdigit() else tag_name_or_id
+    try:
+        detach_tag_from_transaction(db, txn_id=txn_id, tag_name_or_id=identifier)
+        txn = db.query(Transaction).filter(Transaction.id == txn_id).first()
+        return TransactionResponse.from_orm_model(txn)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

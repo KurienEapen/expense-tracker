@@ -38,3 +38,5 @@ class Transaction(Base):
     notes = Column(Text, nullable=True)
     created_at_utc = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at_utc = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    tags = relationship("Tag", secondary="transaction_tags", back_populates="transactions", lazy="joined")

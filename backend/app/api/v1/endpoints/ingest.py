@@ -151,6 +151,9 @@ def convert_raw_to_transaction(
         )
         db.add(new_rule)
 
+    from app.services.tag_service import auto_tag_transaction
+    auto_tag_transaction(db, txn)
+
     db.commit()
     db.refresh(txn)
 

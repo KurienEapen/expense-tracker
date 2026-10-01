@@ -55,6 +55,38 @@ def migrate_sqlite_schema(bind_engine: Engine):
                 if "location_address" not in columns:
                     conn.execute(text("ALTER TABLE transactions ADD COLUMN location_address VARCHAR(512)"))
                 conn.commit()
+
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS tags (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name VARCHAR(64) UNIQUE NOT NULL,
+                    color VARCHAR(32) NOT NULL DEFAULT '#6366F1',
+                    icon VARCHAR(32) NOT NULL DEFAULT '🏷️',
+                    description VARCHAR(256),
+                    start_date DATETIME,
+                    end_date DATETIME,
+                    auto_tag_active BOOLEAN NOT NULL DEFAULT 1,
+                    created_at_utc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at_utc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS transaction_tags (
+                    transaction_id INTEGER NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+                    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                    created_at_utc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (transaction_id, tag_id)
+                )
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS tag_exclusions (
+                    transaction_id INTEGER NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+                    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                    created_at_utc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (transaction_id, tag_id)
+                )
+            """))
+            conn.commit()
         except Exception:
             pass
 

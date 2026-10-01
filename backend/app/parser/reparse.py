@@ -103,6 +103,10 @@ def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
     if not txn.reviewed_at_utc or txn.review_source == "auto":
         apply_categorization_to_transaction(db, txn)
 
+    # Apply date-range auto-tagging (e.g. active trips/events)
+    from app.services.tag_service import auto_tag_transaction
+    auto_tag_transaction(db, txn)
+
     db.commit()
     db.refresh(txn)
     return txn

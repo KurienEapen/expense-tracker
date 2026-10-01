@@ -43,6 +43,16 @@ from fastapi.staticfiles import StaticFiles
 # Include API v1 router
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+@app.middleware("http")
+async def add_no_cache_header(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.endswith(".js") or path.endswith(".css") or path == "/" or path.endswith(".html"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 @app.get("/api/v1/info")
 def root_info():
     return {

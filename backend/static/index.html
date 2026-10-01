@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
-  <script src="/config.js"></script>
+  <link rel="stylesheet" href="/styles.css?v=20261002_03">
+  <script src="/config.js?v=20261002_03"></script>
   <title>AdultMoney — Personal Expense Intelligence</title>
 </head>
 <body>
@@ -39,6 +39,10 @@
         <a class="nav-item" href="#analytics" onclick="showSection('analytics')">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           Analytics & Trends
+        </a>
+        <a class="nav-item" href="#tags" onclick="showSection('tags')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+          Trips & Tags
         </a>
         <a class="nav-item" href="#budgets" onclick="showSection('budgets')">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -80,6 +84,26 @@
       <!-- Content Container -->
       <div class="content-area">
         
+        <!-- Active Trip Status Strip -->
+        <div id="activeTripBanner" class="trip-banner" style="display:none;">
+          <div class="trip-banner-content">
+            <div class="trip-banner-icon" id="activeTripIcon">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2m4 0H5a2 2 0 00-2 2v11a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2zM9 12v4m6-4v4"/></svg>
+            </div>
+            <div>
+              <div class="trip-banner-title">
+                <span id="activeTripName">Trip Name</span>
+                <span class="status-pill status-cleared"><span class="pulse-dot"></span> Live Trip Mode</span>
+              </div>
+              <div class="trip-banner-dates" id="activeTripDates">Auto-tagging incoming expenses</div>
+            </div>
+          </div>
+          <div class="trip-banner-actions">
+            <button class="btn btn-secondary" style="height:32px; padding:0 12px; font-size:12px;" onclick="viewActiveTripTransactions()">View in Ledger</button>
+            <button class="btn btn-secondary" style="height:32px; padding:0 10px; font-size:12px;" onclick="showSection('tags')">Manage</button>
+          </div>
+        </div>
+
         <!-- Metrics Row -->
         <div class="metrics-grid">
           <div class="metric-card">
@@ -197,12 +221,15 @@
         <div class="panel" id="sectionTransactions" style="display:none;">
           <div class="panel-header" style="flex-wrap:wrap; gap:12px;">
             <h2 class="panel-title">All Transactions</h2>
-            <div style="display:flex; gap:10px; flex:1; max-width:650px;">
-              <input type="text" id="searchInput" class="input-control" placeholder="Search merchant or issuer..." oninput="debounceSearch()">
+            <div style="display:flex; gap:10px; flex:1; max-width:800px; flex-wrap:wrap;">
+              <input type="text" id="searchInput" class="input-control" placeholder="Search merchant, issuer or notes..." oninput="debounceSearch()" style="min-width:180px; flex:1;">
+              <select id="tagFilter" class="input-control" style="width:160px;" onchange="loadFullTransactions()">
+                <option value="">All Tags / Trips</option>
+              </select>
               <select id="issuerFilter" class="input-control" style="width:140px;" onchange="loadFullTransactions()">
                 <option value="">All Issuers / Banks</option>
               </select>
-              <select id="categoryFilter" class="input-control" style="width:160px;" onchange="loadFullTransactions()">
+              <select id="categoryFilter" class="input-control" style="width:150px;" onchange="loadFullTransactions()">
                 <option value="">All Categories</option>
               </select>
             </div>
@@ -353,6 +380,132 @@
           </div>
         </div>
 
+        <!-- Trips & Tags Section -->
+        <div class="panel" id="sectionTags" style="display:none; flex-direction:column; gap:20px;">
+          <div class="panel-header" style="flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="panel-title">Trips & Expense Tags</h2>
+              <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">
+                Organize expenses across categories for vacations, events, or projects. Auto-tag incoming expenses during trip date ranges.
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="toggleTripCreatorPanel()" style="height:36px; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+              <span>New Trip / Tag</span>
+            </button>
+          </div>
+
+          <!-- Collapsible Inline Creator Panel -->
+          <div id="tripCreatorPanel" class="trip-creator-panel" style="display:none;">
+            <div class="trip-creator-header">
+              <div class="trip-creator-title" id="tagFormTitle">Create Trip / Event Tag</div>
+              <button class="btn-icon-only" style="width:28px; height:28px;" onclick="toggleTripCreatorPanel(false)" title="Close">✕</button>
+            </div>
+            <form onsubmit="handleSaveTag(event)" style="display:flex; flex-direction:column; gap:16px;">
+              <input type="hidden" id="tagFormEditId" value="">
+              <input type="hidden" id="tagFormIcon" value="trip">
+              <input type="hidden" id="tagFormColor" value="#6366F1">
+
+              <div class="form-grid-row">
+                <div>
+                  <label class="form-label">Tag / Trip Name *</label>
+                  <input type="text" id="tagFormName" class="input-control" placeholder="e.g. Goa Trip 2026, Work Offsite" required>
+                </div>
+                <div>
+                  <label class="form-label">Description (Optional)</label>
+                  <input type="text" id="tagFormDescription" class="input-control" placeholder="Context or notes">
+                </div>
+              </div>
+
+              <div class="form-grid-row">
+                <div>
+                  <label class="form-label">Symbol</label>
+                  <div class="icon-selector-group" id="tagIconPicker">
+                    <button type="button" class="icon-btn-choice active" data-icon="trip" onclick="selectTagIcon(this)" title="Luggage / Trip">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 6V4a2 2 0 012-2h2a2 2 0 012 2v2m4 0H5a2 2 0 00-2 2v11a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2zM9 12v4m6-4v4"/></svg>
+                    </button>
+                    <button type="button" class="icon-btn-choice" data-icon="tag" onclick="selectTagIcon(this)" title="Tag">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                    </button>
+                    <button type="button" class="icon-btn-choice" data-icon="flight" onclick="selectTagIcon(this)" title="Flight">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    </button>
+                    <button type="button" class="icon-btn-choice" data-icon="drive" onclick="selectTagIcon(this)" title="Roadtrip / Car">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 17h14M5 17a2 2 0 01-2-2V9a2 2 0 012-2h14a2 2 0 012 2v6a2 2 0 01-2 2M5 17l1 3h12l1-3M7 13h.01M17 13h.01"/></svg>
+                    </button>
+                    <button type="button" class="icon-btn-choice" data-icon="briefcase" onclick="selectTagIcon(this)" title="Work / Business">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+                    </button>
+                    <button type="button" class="icon-btn-choice" data-icon="home" onclick="selectTagIcon(this)" title="Home / Personal">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Color Accent</label>
+                  <div class="color-swatch-group" id="tagColorPicker">
+                    <button type="button" class="swatch-btn active" style="background:#6366F1;" data-color="#6366F1" onclick="selectTagColor(this)" title="Indigo"></button>
+                    <button type="button" class="swatch-btn" style="background:#10B981;" data-color="#10B981" onclick="selectTagColor(this)" title="Emerald"></button>
+                    <button type="button" class="swatch-btn" style="background:#F59E0B;" data-color="#F59E0B" onclick="selectTagColor(this)" title="Amber"></button>
+                    <button type="button" class="swatch-btn" style="background:#F43F5E;" data-color="#F43F5E" onclick="selectTagColor(this)" title="Rose"></button>
+                    <button type="button" class="swatch-btn" style="background:#06B6D4;" data-color="#06B6D4" onclick="selectTagColor(this)" title="Cyan"></button>
+                    <button type="button" class="swatch-btn" style="background:#64748B;" data-color="#64748B" onclick="selectTagColor(this)" title="Slate"></button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Date Window -->
+              <div class="date-window-container">
+                <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:2px;">Trip Date Window (Auto-Tagging)</div>
+                <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">Every expense incurred within this duration will automatically be tagged.</div>
+                <div class="form-grid-row">
+                  <div>
+                    <label class="form-label" style="font-size:11px;">Start Date</label>
+                    <input type="date" id="tagFormStartDate" class="input-control">
+                  </div>
+                  <div>
+                    <label class="form-label" style="font-size:11px;">Return Date</label>
+                    <input type="date" id="tagFormEndDate" class="input-control">
+                  </div>
+                </div>
+                <div style="margin-top:10px; display:flex; align-items:center; gap:8px;">
+                  <input type="checkbox" id="tagFormAutoTagActive" checked style="accent-color:var(--accent-primary); width:15px; height:15px; cursor:pointer;">
+                  <label for="tagFormAutoTagActive" style="font-size:12px; color:var(--text-secondary); cursor:pointer;">Auto-tag expenses in date range & retroactively apply</label>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <button type="button" class="btn btn-danger btn-sm" id="btnDeleteTagInPanel" style="display:none;" onclick="handleDeleteFromPanel()">Delete Tag</button>
+                <div style="display:flex; gap:8px; margin-left:auto;">
+                  <button type="button" class="btn btn-secondary" onclick="toggleTripCreatorPanel(false)">Cancel</button>
+                  <button type="submit" class="btn btn-primary" id="btnSaveTagSubmit">Save Tag / Trip</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Trips & Tags Ledger Table -->
+          <div class="table-container desktop-table-view">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tag / Trip</th>
+                  <th>Window</th>
+                  <th>Status</th>
+                  <th>Outflow</th>
+                  <th>Transactions</th>
+                  <th>Category Breakdown</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tagsTableBody">
+                <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">Loading trips and tags...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mobile-txn-list" id="tagsMobileList"></div>
+        </div>
+
       </div>
     </main>
 
@@ -370,6 +523,10 @@
         <svg class="mobile-nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Analytics
       </div>
+      <div class="mobile-nav-item" id="mobNavTags" onclick="showSection('tags')">
+        <svg class="mobile-nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+        Trips
+      </div>
       <div class="mobile-nav-item" id="mobNavBudgets" onclick="showSection('budgets')">
         <svg class="mobile-nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         Budgets
@@ -382,6 +539,53 @@
 
   </div>
 
-  <script src="/app.js"></script>
+  <!-- Anchored Tag Popover (Non-modal, inline attached) -->
+  <div id="tagPopover" class="tag-popover" style="display:none;" onclick="event.stopPropagation()">
+    <div class="popover-header">
+      <span>Tag Expense</span>
+      <button onclick="closeTagPopover()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:12px;">✕</button>
+    </div>
+    
+    <div style="font-size:11px; color:var(--text-muted);">Select existing tag:</div>
+    <div id="popoverTagList" class="popover-tag-list">
+      <span style="font-size:11px; color:var(--text-muted);">No tags yet</span>
+    </div>
+
+    <div style="border-top:1px solid var(--border-subtle); padding-top:8px;">
+      <form onsubmit="handlePopoverCreateTag(event)" style="display:flex; gap:6px;">
+        <input type="text" id="popoverTagInput" class="input-control" placeholder="New tag name..." style="height:32px; font-size:12px; padding:0 8px;" required>
+        <button type="submit" class="btn btn-primary" style="height:32px; padding:0 10px; font-size:12px;">Add</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reusable Confirmation Dialog Modal (Accessible, non-native) -->
+  <div id="confirmDialog" class="modal-backdrop" style="display:none;" onclick="closeConfirmDialog(event)">
+    <div class="modal-dialog-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="color:var(--accent-danger); display:inline-flex;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </span>
+          <span id="confirmDialogTitle" style="font-weight:600; font-size:14px; color:var(--text-primary);">Confirm Action</span>
+        </div>
+        <button class="btn-icon-only" onclick="closeConfirmDialog()" style="width:24px; height:24px; border:none; background:none; cursor:pointer; color:var(--text-muted); display:inline-flex; align-items:center; justify-content:center;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="confirmDialogBody" class="modal-body" style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin:14px 0 20px 0;">
+        Are you sure you want to proceed?
+      </div>
+      <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeConfirmDialog()" style="height:32px; padding:0 12px; font-size:12px;">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDialogProceedBtn" style="height:32px; padding:0 14px; font-size:12px; font-weight:600;">Delete Tag</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/app.js?v=20261002_03"></script>
 </body>
 </html>
