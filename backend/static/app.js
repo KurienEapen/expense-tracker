@@ -252,26 +252,32 @@ function renderTransactionRow(t, showAction) {
     ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; display:flex; align-items:center; gap:4px;"><span style="color:var(--accent-warning);">📍</span> ${escapeHtml(t.location_name)}</div>`
     : '';
 
+  const nonSplittable = ['Transfers & Payments', 'Transfer', 'Rewards & Cashback'];
+  const isCredit = t.transaction_type === 'credit';
+  const isEligibleCategory = !nonSplittable.includes(categoryStr);
+  const isSplittable = !isCredit && isEligibleCategory && (t.amount_inr > 0);
+
   let splitBadgeHtml = '';
   if (t.is_split) {
     const myShareFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(t.my_share_inr);
     const recFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(t.reimbursable_inr);
     splitBadgeHtml = `
-      <div style="font-size:11px; color:var(--accent-primary); margin-top:2px; display:flex; align-items:center; gap:6px;">
-        <span>✂️ Split (${t.split_ratio_label}): My Share ${myShareFormatted} | Owed ${recFormatted}</span>
-        <button onclick="unsplitTransaction(${t.id})" style="background:none; border:none; color:var(--accent-danger); cursor:pointer; font-size:11px; text-decoration:underline;">Unsplit</button>
+      <div style="font-size:11px; color:var(--accent-primary); margin-top:3px; display:inline-flex; align-items:center; gap:6px; background:rgba(59, 130, 246, 0.08); padding:2px 8px; border-radius:4px; border:1px solid rgba(59, 130, 246, 0.18);">
+        <span>✂️ Split (${t.split_ratio_label}): My Share ${myShareFormatted} • Owed ${recFormatted}</span>
+        <button onclick="unsplitTransaction(${t.id})" style="background:none; border:none; color:var(--accent-danger); cursor:pointer; font-size:11px; font-weight:600; padding:0 2px;" title="Cancel Split">✕</button>
       </div>
     `;
-  } else {
+  } else if (isSplittable) {
     splitBadgeHtml = `
-      <div style="display:inline-flex; align-items:center; gap:4px; margin-top:2px;">
-        <span style="font-size:11px; color:var(--text-muted);">Split:</span>
-        <button onclick="splitTransactionPreset(${t.id}, '1/2', ${t.amount_inr})" class="btn-icon" style="height:20px; padding:0 6px; font-size:10px;" title="Split 50/50">½</button>
-        <button onclick="splitTransactionPreset(${t.id}, '1/3', ${t.amount_inr})" class="btn-icon" style="height:20px; padding:0 6px; font-size:10px;" title="Split 1/3">⅓</button>
-        <button onclick="promptCustomSplit(${t.id}, ${t.amount_inr})" class="btn-icon" style="height:20px; padding:0 6px; font-size:10px;" title="Custom Share">✎</button>
+      <div style="display:inline-flex; align-items:center; gap:3px; margin-top:3px;">
+        <span style="font-size:10px; font-weight:600; color:var(--text-muted); letter-spacing:0.03em;">SPLIT:</span>
+        <button onclick="splitTransactionPreset(${t.id}, '1/2', ${t.amount_inr})" class="btn-icon" style="height:18px; padding:0 5px; font-size:10px; border-radius:3px;" title="Split 50/50">½</button>
+        <button onclick="splitTransactionPreset(${t.id}, '1/3', ${t.amount_inr})" class="btn-icon" style="height:18px; padding:0 5px; font-size:10px; border-radius:3px;" title="Split 1/3">⅓</button>
+        <button onclick="promptCustomSplit(${t.id}, ${t.amount_inr})" class="btn-icon" style="height:18px; padding:0 5px; font-size:10px; border-radius:3px;" title="Custom Share">✎</button>
       </div>
     `;
   }
+
 
   return `
     <tr>
@@ -300,17 +306,22 @@ function renderMobileTransactionCard(t) {
     ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;"><span style="color:var(--accent-warning);">📍</span> ${escapeHtml(t.location_name)}</div>`
     : '';
 
+  const nonSplittable = ['Transfers & Payments', 'Transfer', 'Rewards & Cashback'];
+  const isCredit = t.transaction_type === 'credit';
+  const isEligibleCategory = !nonSplittable.includes(categoryStr);
+  const isSplittable = !isCredit && isEligibleCategory && (t.amount_inr > 0);
+
   let splitControlsHtml = '';
   if (t.is_split) {
     const myShareFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(t.my_share_inr);
     const recFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(t.reimbursable_inr);
     splitControlsHtml = `
-      <div style="font-size:11px; color:var(--accent-primary); margin-top:6px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-app); padding:4px 8px; border-radius:var(--radius-sm);">
+      <div style="font-size:11px; color:var(--accent-primary); margin-top:6px; display:flex; justify-content:space-between; align-items:center; background:rgba(59, 130, 246, 0.08); padding:4px 8px; border-radius:var(--radius-sm); border:1px solid rgba(59, 130, 246, 0.18);">
         <span>✂️ Split: My Share ${myShareFormatted} | Owed ${recFormatted}</span>
         <button onclick="unsplitTransaction(${t.id})" style="background:none; border:none; color:var(--accent-danger); cursor:pointer; font-size:11px; font-weight:600;">✕ Unsplit</button>
       </div>
     `;
-  } else {
+  } else if (isSplittable) {
     splitControlsHtml = `
       <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
         <span style="font-size:11px; color:var(--text-muted);">Split:</span>
@@ -320,6 +331,7 @@ function renderMobileTransactionCard(t) {
       </div>
     `;
   }
+
 
   return `
     <div class="mobile-txn-card">
