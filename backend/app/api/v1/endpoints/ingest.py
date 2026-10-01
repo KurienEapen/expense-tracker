@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.api.deps import authenticate_device
 from app.models.device import Device
 from app.models.raw_message import RawMessage
+from pydantic import BaseModel
 from app.schemas.ingest import IngestPayload, IngestResponse
 from app.core.security import compute_idempotency_key
 from app.parser.reparse import reparse_raw_message
@@ -76,3 +77,88 @@ def ingest_message(
         location_name=txn.location_name if txn else None,
         message="Successfully ingested and parsed raw message"
     )
+
+class ConvertRawRequest(BaseModel):
+    amount_inr: float
+    merchant: str
+    category: str
+    transaction_type: str = "debit"
+
+@router.post("/convert-raw/{raw_id}", response_model=IngestResponse)
+def convert_raw_to_transaction(
+    raw_id: int,
+    payload: ConvertRawRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Manually converts an unparsed or missed RawMessage into a full Transaction record
+    from the Android Companion App or Web Dashboard, and creates a long-term merchant rule
+    so all future messages from this sender/merchant are automatically recognized.
+    """
+    from fastapi import HTTPException
+    from app.models.merchant_rule import MerchantRule
+
+    raw = db.query(RawMessage).filter(RawMessage.id == raw_id).first()
+    if not raw:
+        raise HTTPException(status_code=404, detail=f"RawMessage #{raw_id} not found")
+
+    amount_paise = int(round(payload.amount_inr * 100))
+    merchant_clean = payload.merchant.strip()
+
+    txn = db.query(Transaction).filter(Transaction.raw_message_id == raw.id).first()
+    if not txn:
+        txn = Transaction(
+            raw_message_id=raw.id,
+            source=raw.source,
+            issuer=raw.sender,
+            card_type="debit" if payload.transaction_type == "debit" else "credit",
+            card_last4=None,
+            transaction_type=payload.transaction_type,
+            amount_paise=amount_paise,
+            currency="INR",
+            merchant_raw=merchant_clean,
+            merchant_clean=merchant_clean,
+            category=payload.category,
+            transacted_at_utc=raw.received_at_utc,
+            parsed_by_template_id="manual_conversion",
+            parser_confidence=1.0,
+            status="settled",
+            needs_review=False,
+            review_source="user_converted",
+            reviewed_at_utc=datetime.utcnow()
+        )
+        db.add(txn)
+    else:
+        txn.merchant_raw = merchant_clean
+        txn.merchant_clean = merchant_clean
+        txn.amount_paise = amount_paise
+        txn.category = payload.category
+        txn.needs_review = False
+        txn.review_source = "user_converted"
+
+    pattern = merchant_clean.lower()
+    existing_rule = db.query(MerchantRule).filter(MerchantRule.pattern == pattern).first()
+    if not existing_rule:
+        new_rule = MerchantRule(
+            pattern=pattern,
+            category=payload.category,
+            is_user_defined=True,
+            confidence=1.0,
+            created_at_utc=datetime.utcnow()
+        )
+        db.add(new_rule)
+
+    db.commit()
+    db.refresh(txn)
+
+    return IngestResponse(
+        status="stored",
+        raw_id=raw.id,
+        parsed_transaction_id=txn.id,
+        needs_review=False,
+        merchant=txn.merchant_clean,
+        amount_inr=txn.amount_paise / 100.0,
+        category=txn.category,
+        message=f"Successfully converted SMS into transaction and learned rule for '{merchant_clean}'"
+    )
+
