@@ -24,4 +24,6 @@ android/.idea/
 .idea/
 *.apk
 *.aab
+scratch/
+*.png
 

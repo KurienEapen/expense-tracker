@@ -31,6 +31,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -59,6 +63,27 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Ensure safe top status bar boundary & dynamic keyboard insets
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.swipeRefresh) { view, insets ->
+            val statusBarInset = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            val imeInset = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val navBarInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+
+            val bottomPadding = maxOf(imeInset.bottom, navBarInset.bottom)
+            
+            // Set top padding on outer container so ScrollView is strictly bounded below status bar
+            view.setPadding(0, statusBarInset.top, 0, bottomPadding)
+
+            // When keyboard appears while editing settings, auto-scroll to settings card
+            if (imeInset.bottom > 0 && isSettingsVisible) {
+                binding.scrollView.post {
+                    binding.scrollView.smoothScrollTo(0, binding.cardSettings.top)
+                }
+            }
+            insets
+        }
+
         prefs = PreferencesManager(this)
         initViews()
         observeOutbox()
@@ -83,6 +108,12 @@ class MainActivity : AppCompatActivity() {
             isSettingsVisible = !isSettingsVisible
             binding.cardSettings.visibility = if (isSettingsVisible) View.VISIBLE else View.GONE
             binding.btnToggleSettings.text = if (isSettingsVisible) "Done" else "Settings"
+
+            if (isSettingsVisible) {
+                binding.scrollView.post {
+                    binding.scrollView.smoothScrollTo(0, binding.cardSettings.top)
+                }
+            }
         }
 
         // Save settings

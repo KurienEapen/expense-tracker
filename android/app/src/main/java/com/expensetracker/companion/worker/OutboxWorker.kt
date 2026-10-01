@@ -124,7 +124,8 @@ class OutboxWorker(
                                         val amountInr = respJson.get("amount_inr")?.let { if (it.isJsonNull) null else it.asDouble }
 
                                         if (needsReview && txnId > 0 && amountInr != null) {
-                                            showAmbiguityNotification(context, txnId, merchant ?: "Unknown", amountInr)
+                                            val locationName = respJson.get("location_name")?.let { if (it.isJsonNull) null else it.asString }
+                                            showAmbiguityNotification(context, txnId, merchant ?: "Unknown", amountInr, locationName)
                                         }
                                     } catch (e: Exception) {
                                         Log.w(TAG, "Error checking ambiguity review: ${e.message}")
@@ -155,7 +156,8 @@ class OutboxWorker(
             context: Context,
             txnId: Int,
             merchant: String,
-            amountInr: Double
+            amountInr: Double,
+            locationName: String? = null
         ) {
             val notifManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -186,10 +188,11 @@ class OutboxWorker(
             }
 
             val formattedAmount = String.format(Locale.getDefault(), "₹%.2f", amountInr)
+            val subText = if (!locationName.isNullOrBlank()) "$locationName • Tap category to save:" else "Tap category to save and remember:"
             val notif = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("$formattedAmount at $merchant")
-                .setContentText("Tap category to save and remember:")
+                .setContentText(subText)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .addAction(createAction("🍔 Dining", "Food & Dining", 1))

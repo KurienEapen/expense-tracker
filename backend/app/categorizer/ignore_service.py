@@ -20,8 +20,8 @@ def dismiss_as_non_transactional(db: Session, txn_id: int) -> Tuple[Optional[Tra
         return None, None, 0
 
     raw_msg = txn.raw_message
-    body = raw_msg.body if raw_msg else (txn.notes or "")
-    sender = raw_msg.sender if raw_msg else txn.issuer
+    body = (raw_msg.body if raw_msg and raw_msg.body else (txn.notes or txn.merchant_raw or f"{txn.issuer} non-expense transaction")).strip()
+    sender = (raw_msg.sender if raw_msg and raw_msg.sender else (txn.issuer or "BANK")).strip()
 
     # Extract pattern and metadata
     pattern, description, sender_filter = extract_ignore_rule_for_message(body, sender)

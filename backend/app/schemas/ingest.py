@@ -28,3 +28,4 @@ class IngestResponse(BaseModel):
     merchant: Optional[str] = None
     amount_inr: Optional[float] = None
     category: Optional[str] = None
+    location_name: Optional[str] = None

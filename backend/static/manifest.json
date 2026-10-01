@@ -1,0 +1,9 @@
+{
+  "name": "AdultMoney",
+  "short_name": "AdultMoney",
+  "description": "Personal Expense Intelligence & Auto-Categorization",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090D16",
+  "theme_color": "#090D16"
+}

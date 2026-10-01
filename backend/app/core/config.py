@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    PROJECT_NAME: str = "Expense Tracker API"
+    PROJECT_NAME: str = "AdultMoney"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
     
@@ -25,5 +25,8 @@ class Settings(BaseSettings):
     # Telegram Alerting (configured in Phase 5)
     TELEGRAM_BOT_TOKEN: Optional[str] = None
     TELEGRAM_CHAT_ID: Optional[str] = None
+
+    # Google Places API Key (Optional for high-accuracy commercial venue lookup)
+    GOOGLE_PLACES_API_KEY: Optional[str] = None
 
 settings = Settings()

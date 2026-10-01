@@ -70,3 +70,69 @@ def trigger_reparse(
     """
     stats = reparse_all(db, limit=limit)
     return ReparseResponse(**stats)
+
+from fastapi import UploadFile, File
+import csv
+import io
+import hashlib
+from datetime import datetime
+from app.models.raw_message import RawMessage
+
+class UploadStatementResponse(BaseModel):
+    filename: str
+    total_lines: int
+    ingested_count: int
+    reparsed_stats: ReparseResponse
+    message: str
+
+@router.post("/upload-statement", response_model=UploadStatementResponse)
+async def upload_bank_statement(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Uploads a bank statement (CSV or text file) for automatic parsing and auto-categorization.
+    """
+    contents = await file.read()
+    text = contents.decode("utf-8", errors="ignore")
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    
+    ingested = 0
+    now_ms = int(datetime.utcnow().timestamp() * 1000)
+
+    for idx, line in enumerate(lines):
+        if not line or line.startswith("#") or line.lower().startswith("date,"):
+            continue
+
+        # Generate unique idempotency key for statement record
+        hash_digest = hashlib.sha256(f"statement_{file.filename}_{idx}_{line}".encode("utf-8")).hexdigest()[:24]
+        idempotency_key = f"stmt_{hash_digest}"
+
+        existing = db.query(RawMessage).filter(RawMessage.idempotency_key == idempotency_key).first()
+        if not existing:
+            raw_msg = RawMessage(
+                idempotency_key=idempotency_key,
+                source="statement_csv",
+                sender="STATEMENT_IMPORT",
+                app_package="csv.upload",
+                body=line,
+                received_at_ms=now_ms,
+                device_id="pwa_upload",
+                received_at_utc=datetime.utcnow()
+            )
+            db.add(raw_msg)
+            ingested += 1
+
+    if ingested > 0:
+        db.commit()
+
+    stats = reparse_all(db, limit=None)
+
+    return UploadStatementResponse(
+        filename=file.filename or "statement.csv",
+        total_lines=len(lines),
+        ingested_count=ingested,
+        reparsed_stats=ReparseResponse(**stats),
+        message=f"Successfully ingested {ingested} new transaction records from statement."
+    )
+

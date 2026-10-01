@@ -24,6 +24,20 @@ def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
     if not parsed:
         return None
 
+    # Parse location from raw_message if available
+    loc_lat, loc_lng, loc_name, loc_addr = None, None, None, None
+    if raw.location_json:
+        try:
+            import json
+            from app.services.geocoding import reverse_geocode
+            loc_data = json.loads(raw.location_json)
+            loc_lat = loc_data.get("lat") or loc_data.get("latitude")
+            loc_lng = loc_data.get("lng") or loc_data.get("longitude")
+            if loc_lat and loc_lng:
+                loc_name, loc_addr = reverse_geocode(loc_lat, loc_lng, parsed.merchant_clean or parsed.merchant_raw)
+        except Exception as e:
+            logger.warning(f"Location parsing failed for RawMessage #{raw.id}: {e}")
+
     # Check for existing transaction linked to this raw_message_id
     txn = db.query(Transaction).filter(Transaction.raw_message_id == raw.id).first()
     if txn:
@@ -36,13 +50,17 @@ def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
         txn.currency = parsed.currency
         txn.merchant_raw = parsed.merchant_raw
         txn.merchant_clean = parsed.merchant_clean
-        # Retain category if already reviewed by user, else use template category
         if not txn.review_source or txn.review_source == "auto":
             txn.category = parsed.category
         txn.transacted_at_utc = parsed.transacted_at_utc
         txn.parsed_by_template_id = parsed.parsed_by_template_id
         txn.parser_confidence = parsed.parser_confidence
         txn.status = parsed.status
+        if loc_lat and loc_lng:
+            txn.location_lat = loc_lat
+            txn.location_lng = loc_lng
+            txn.location_name = loc_name
+            txn.location_address = loc_addr
     else:
         txn = Transaction(
             raw_message_id=raw.id,
@@ -60,6 +78,10 @@ def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
             parsed_by_template_id=parsed.parsed_by_template_id,
             parser_confidence=parsed.parser_confidence,
             status=parsed.status,
+            location_lat=loc_lat,
+            location_lng=loc_lng,
+            location_name=loc_name,
+            location_address=loc_addr
         )
         db.add(txn)
 

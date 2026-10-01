@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#090D16">
+  <meta name="description" content="AdultMoney - Personal Expense Intelligence & Auto-Categorization">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/config.js"></script>
+  <title>AdultMoney — Personal Expense Intelligence</title>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="sidebar">
+      <div class="brand-header">
+        <div class="brand-icon">₹</div>
+        <span class="brand-name" id="brandTitle">AdultMoney</span>
+      </div>
+
+      <nav class="nav-group">
+        <div class="nav-label">Overview</div>
+        <a class="nav-item active" href="#dashboard" onclick="showSection('dashboard')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"/></svg>
+          Dashboard
+        </a>
+        <a class="nav-item" href="#transactions" onclick="showSection('transactions')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          Transactions
+        </a>
+        <a class="nav-item" href="#review" onclick="showSection('review')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Review Queue <span id="sidebarReviewCount" class="status-pill status-pending" style="margin-left:auto; display:none;">0</span>
+        </a>
+        <a class="nav-item" href="#analytics" onclick="showSection('analytics')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Analytics & Trends
+        </a>
+        <a class="nav-item" href="#budgets" onclick="showSection('budgets')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Budgets & Rules
+        </a>
+      </nav>
+
+      <nav class="nav-group">
+        <div class="nav-label">Data & Export</div>
+        <a class="nav-item" href="#upload" onclick="showSection('upload')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          Upload Statement
+        </a>
+        <a class="nav-item" href="/api/v1/transactions/export/csv" target="_blank">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Export CSV
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content Stream -->
+    <main class="main-content">
+      
+      <!-- Top App Bar -->
+      <header class="top-bar">
+        <h1 class="top-bar-title" id="pageTitle">Dashboard</h1>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <a href="/api/v1/transactions/export/csv" target="_blank" class="btn btn-secondary" style="height:36px; padding:0 12px; font-size:12px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Export CSV
+          </a>
+          <div class="sync-badge">
+            <span class="sync-dot"></span>
+            <span id="syncStatusText">Synced</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Container -->
+      <div class="content-area">
+        
+        <!-- Metrics Row -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">
+              <span>Total Spent (This Month)</span>
+              <span id="spendChangeBadge" style="color:var(--accent-success); font-weight:600;">Active</span>
+            </div>
+            <div class="metric-value" id="valTotalSpend">₹0.00</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-label">
+              <span>Monthly Budget Burn</span>
+              <span id="valBudgetLabel" style="font-family:var(--font-mono); color:var(--text-secondary);">₹0 / ₹1.8L</span>
+            </div>
+            <div class="metric-value" id="valBudgetRemaining">₹1,80,000</div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressBudgetFill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="metric-card" onclick="showSection('review')" style="cursor:pointer;">
+            <div class="metric-label">
+              <span>Pending Ambiguous Review</span>
+              <span style="color:var(--accent-warning);">Action Needed</span>
+            </div>
+            <div class="metric-value" id="valUnreviewedCount" style="color:var(--accent-warning);">0</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-label">
+              <span>Group Receivables Pool</span>
+              <span style="color:var(--accent-primary); font-weight:600;">Owed Back</span>
+            </div>
+            <div class="metric-value" id="valNetReceivables" style="color:var(--accent-primary);">₹0</div>
+          </div>
+        </div>
+
+        <!-- Dashboard Two-Column Grid -->
+        <div class="dashboard-grid" id="sectionDashboard">
+          
+          <!-- Left Main Feed: Category Breakdown & Transactions -->
+          <div style="display:flex; flex-direction:column; gap:24px;">
+            
+            <!-- Category Spend Distribution -->
+            <div class="panel">
+              <div class="panel-header">
+                <h2 class="panel-title">Category Spend Breakdown</h2>
+              </div>
+              <div id="categoryBreakdownList" style="display:flex; flex-direction:column; gap:10px;">
+                <div style="color:var(--text-muted);">Loading categories...</div>
+              </div>
+            </div>
+
+            <!-- Recent Transactions Table -->
+            <div class="panel">
+              <div class="panel-header">
+                <h2 class="panel-title">Recent Transactions</h2>
+                <button class="btn btn-secondary" onclick="showSection('transactions')" style="height:36px; padding:0 12px; font-size:12px;">View All</button>
+              </div>
+
+              <div class="table-container desktop-table-view">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Merchant / Description</th>
+                      <th>Category</th>
+                      <th>Card / Issuer</th>
+                      <th>Date</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentTransactionsTable">
+                    <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:24px;">Loading transactions...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="mobile-txn-list" id="recentTransactionsMobile"></div>
+            </div>
+
+          </div>
+
+          <!-- Right Sidebar Panel: Card Issuers & Upload Dropzone -->
+          <div style="display:flex; flex-direction:column; gap:24px;">
+            
+            <!-- Card Issuer Summary -->
+            <div class="panel">
+              <div class="panel-header">
+                <h2 class="panel-title">Card Issuer Breakdown</h2>
+              </div>
+              <div id="issuerBreakdownList" style="display:flex; flex-direction:column; gap:10px;">
+                <div style="color:var(--text-muted);">Loading issuers...</div>
+              </div>
+            </div>
+
+            <!-- Statement Dropzone Panel -->
+            <div class="panel">
+              <div class="panel-header">
+                <h2 class="panel-title">Statement Import</h2>
+              </div>
+              <div class="dropzone" id="fileDropzone" onclick="document.getElementById('statementFileInput').click()">
+                <svg class="dropzone-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <div style="font-weight:600; color:var(--text-primary);">Drag & drop bank CSV/PDF</div>
+                <div style="font-size:12px; color:var(--text-muted);">or tap to browse files on phone</div>
+                <input type="file" id="statementFileInput" accept=".csv,.txt,.ofx" style="display:none;" onchange="handleFileSelect(event)">
+              </div>
+              <div id="uploadStatus" style="font-size:12px; color:var(--accent-success); display:none;"></div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Full Transactions Section -->
+        <div class="panel" id="sectionTransactions" style="display:none;">
+          <div class="panel-header" style="flex-wrap:wrap; gap:12px;">
+            <h2 class="panel-title">All Transactions</h2>
+            <div style="display:flex; gap:10px; flex:1; max-width:500px;">
+              <input type="text" id="searchInput" class="input-control" placeholder="Search merchant or issuer..." oninput="debounceSearch()">
+              <select id="categoryFilter" class="input-control" style="width:160px;" onchange="loadFullTransactions()">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-container desktop-table-view">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Merchant / Description</th>
+                  <th>Category</th>
+                  <th>Issuer</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="fullTransactionsTable">
+                <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:24px;">Loading full transaction history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mobile-txn-list" id="fullTransactionsMobile"></div>
+        </div>
+
+        <!-- Analytics & Category Trends Section -->
+        <div class="panel" id="sectionAnalytics" style="display:none; flex-direction:column; gap:24px;">
+          
+          <!-- KPI Summary Banner -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+            <div class="metric-card">
+              <div class="metric-label">Cumulative Spend</div>
+              <div class="metric-value" id="valAnalyticsCumulative">₹0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Avg Monthly Outflow</div>
+              <div class="metric-value" id="valAnalyticsAvg">₹0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Peak Outflow Month</div>
+              <div class="metric-value" id="valAnalyticsPeak" style="font-size:20px; font-weight:600;">-</div>
+            </div>
+          </div>
+
+          <!-- Insights Box -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px;">
+            <div style="font-size:14px; font-weight:600; color:var(--text-primary); margin-bottom:8px;">💡 Spending Insights</div>
+            <div id="analyticsInsightsList" style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-secondary);">
+              Loading insights...
+            </div>
+          </div>
+
+          <!-- Visual Charts Grid -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:24px;">
+            
+            <!-- Monthly Spend Bar Chart -->
+            <div class="panel" style="border:1px solid var(--border-subtle);">
+              <div class="panel-header">
+                <h2 class="panel-title">Month-over-Month Outflow</h2>
+              </div>
+              <div id="barChartContainer" style="min-height:220px; display:flex; align-items:flex-end; justify-content:space-around; gap:12px; padding:24px 12px 12px; background:var(--bg-app); border-radius:var(--radius-sm);">
+                <div style="color:var(--text-muted); align-self:center;">Loading bar chart...</div>
+              </div>
+            </div>
+
+            <!-- Overall Category Donut / Share Chart -->
+            <div class="panel" style="border:1px solid var(--border-subtle);">
+              <div class="panel-header">
+                <h2 class="panel-title">Category Distribution</h2>
+              </div>
+              <div id="donutChartContainer" style="display:flex; flex-direction:column; gap:12px;">
+                <div style="color:var(--text-muted); padding:24px; text-align:center;">Loading distribution...</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Month-by-Month Category Spend Table -->
+          <div class="panel" style="border:1px solid var(--border-subtle);">
+            <div class="panel-header">
+              <h2 class="panel-title">Monthly Category Matrix</h2>
+            </div>
+            <div id="analyticsMatrixContainer" style="display:flex; flex-direction:column; gap:16px;">
+              <div style="color:var(--text-muted); padding:16px;">Loading category matrix...</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Budgets & Custom Rules Section -->
+        <div class="dashboard-grid" id="sectionBudgets" style="display:none;">
+          
+          <!-- Category Budget Thresholds Panel -->
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Category Monthly Budgets & Threshold Alerts</h2>
+            </div>
+
+            <!-- Set Budget Form -->
+            <form onsubmit="handleSetBudget(event)" style="display:flex; gap:10px; flex-wrap:wrap; padding:12px; background:var(--bg-app); border:1px solid var(--border-subtle); border-radius:var(--radius-md);">
+              <select id="budgetCategorySelect" class="input-control" style="flex:1; min-width:140px;" required>
+                <option value="">Select Category</option>
+              </select>
+              <input type="number" id="budgetLimitInput" class="input-control" placeholder="Monthly Limit (₹)" style="flex:1; min-width:120px;" required min="100" step="100">
+              <button type="submit" class="btn btn-primary" style="height:44px;">Set Limit</button>
+            </form>
+
+            <div id="categoryBudgetsList" style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+              <div style="color:var(--text-muted);">Loading budgets...</div>
+            </div>
+          </div>
+
+          <!-- Custom Merchant Rules Panel -->
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Custom Merchant Rules Editor</h2>
+            </div>
+            
+            <!-- Create Rule Form -->
+            <form onsubmit="handleCreateRule(event)" style="display:flex; flex-direction:column; gap:10px; padding:12px; background:var(--bg-app); border:1px solid var(--border-subtle); border-radius:var(--radius-md);">
+              <input type="text" id="rulePatternInput" class="input-control" placeholder="Merchant Substring (e.g. Instamart)" required>
+              <select id="ruleCategorySelect" class="input-control" required>
+                <option value="">Map To Category</option>
+              </select>
+              <button type="submit" class="btn btn-primary" style="width:100%;">Save Rule & Cascade</button>
+            </form>
+
+            <div style="font-size:12px; font-weight:600; color:var(--text-muted); margin-top:8px;">Active Categorization Rules</div>
+            <div id="merchantRulesList" style="display:flex; flex-direction:column; gap:8px;">
+              <div style="color:var(--text-muted);">Loading rules...</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Ambiguity Review Section -->
+        <div class="panel" id="sectionReview" style="display:none;">
+          <div class="panel-header">
+            <h2 class="panel-title">1-Tap Ambiguity Review Queue</h2>
+            <span id="reviewQueueBadge" class="status-pill status-pending">0 Pending</span>
+          </div>
+          <div style="font-size:13px; color:var(--text-secondary);">
+            Review ambiguous transactions below. Assigning a category updates long-term merchant memory. Tapping the trash icon ignores non-expense SMS alerts.
+          </div>
+          
+          <div id="unreviewedCardsContainer" style="display:flex; flex-direction:column; gap:16px; margin-top:8px;">
+            <div style="color:var(--text-muted); text-align:center; padding:32px;">Loading review queue...</div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Mobile Fixed Bottom Navigation Bar -->
+    <nav class="mobile-nav">
+      <div class="mobile-nav-item active" id="mobNavDashboard" onclick="showSection('dashboard')">
+        <svg class="mobile-nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </div>
+      <div class="mobile-nav-item" id="mobNavTransactions" onclick="showSection('transactions')">
+        <svg class="mobile-nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        Transactions
+      </div>
+      <div class="mobile-nav-item" id="mobNavAnalytics" onclick="showSection('analytics')">
+        <svg class="mobile-nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analytics
+      </div>
+      <div class="mobile-nav-item" id="mobNavBudgets" onclick="showSection('budgets')">
+        <svg class="mobile-nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Budgets
+      </div>
+      <div class="mobile-nav-item" id="mobNavReview" onclick="showSection('review')">
+        <svg class="mobile-nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Review
+      </div>
+    </nav>
+
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

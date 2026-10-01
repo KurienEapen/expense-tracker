@@ -56,8 +56,10 @@ class UnreviewedBottomSheetFragment : BottomSheetDialogFragment() {
         prefs = PreferencesManager(requireContext())
 
         binding.btnViewIgnoredRules.setOnClickListener {
+            val fm = parentFragmentManager
+            dismiss()
             IgnoredRulesBottomSheetFragment.newInstance()
-                .show(parentFragmentManager, IgnoredRulesBottomSheetFragment.TAG)
+                .show(fm, IgnoredRulesBottomSheetFragment.TAG)
         }
 
         setupRecyclerView()

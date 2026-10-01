@@ -41,7 +41,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="1-tap to categorize. Tap 'Not an Expense' to ignore."
+                android:text="1-tap to categorize. Tap trash icon to ignore."
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 

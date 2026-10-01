@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
+from app.core.config import settings, BASE_DIR
 from app.core.database import Base, engine, SessionLocal, migrate_sqlite_schema
 from app.models import *  # Ensure all SQLAlchemy models are registered
 from app.api.v1.router import api_router
@@ -38,14 +38,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+
 # Include API v1 router
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-@app.get("/")
-def root():
+@app.get("/api/v1/info")
+def root_info():
     return {
         "name": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "status": "online",
         "docs": "/docs"
     }
+
+# Serve Web PWA Dashboard static files at root
+static_dir = BASE_DIR / "static"
+static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+

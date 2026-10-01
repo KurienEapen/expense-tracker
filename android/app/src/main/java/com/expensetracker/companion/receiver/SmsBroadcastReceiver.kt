@@ -50,6 +50,28 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
 
             Log.i(TAG, "Capturing financial SMS from $normalizedSender. Enqueuing to outbox...")
 
+            // Capture phone location if permissions granted
+            var locationJson: String? = null
+            try {
+                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                    androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    
+                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                    val lastGps = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                    val lastNet = locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                    val bestLocation = if (lastGps != null && lastNet != null) {
+                        if (lastGps.time > lastNet.time) lastGps else lastNet
+                    } else lastGps ?: lastNet
+
+                    if (bestLocation != null) {
+                        locationJson = """{"lat": ${bestLocation.latitude}, "lng": ${bestLocation.longitude}}"""
+                        Log.d(TAG, "Captured location coordinates: ${bestLocation.latitude}, ${bestLocation.longitude}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to capture location: ${e.message}")
+            }
+
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -61,7 +83,8 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                         appPackage = null,
                         body = redactedBody,
                         receivedAtMs = receivedAtMs,
-                        deviceTz = "Asia/Kolkata"
+                        deviceTz = "Asia/Kolkata",
+                        locationJson = locationJson
                     )
                     db.outboxDao().insert(outboxItem)
                     OutboxWorker.enqueue(context)

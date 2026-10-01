@@ -73,5 +73,6 @@ def ingest_message(
         merchant=txn.merchant_clean if txn else None,
         amount_inr=(txn.amount_paise / 100.0) if txn else None,
         category=txn.category if txn else None,
+        location_name=txn.location_name if txn else None,
         message="Successfully ingested and parsed raw message"
     )

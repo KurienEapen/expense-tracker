@@ -18,7 +18,7 @@
         android:orientation="vertical"
         android:padding="14dp">
 
-        <!-- Header: Merchant & Amount -->
+        <!-- Header: Merchant, Amount & Delete Action -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -46,6 +46,18 @@
                 android:textColor="@color/primary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDismissNonTransactional"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:contentDescription="Dismiss as non-expense"
+                app:icon="@drawable/ic_delete"
+                app:iconSize="20dp"
+                app:iconTint="@color/text_secondary"
+                app:rippleColor="@color/status_error_bg" />
 
         </LinearLayout>
 
@@ -181,26 +193,6 @@
             </com.google.android.material.chip.ChipGroup>
 
         </HorizontalScrollView>
-
-        <!-- Dismiss Action: Not an Expense -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="end"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDismissNonTransactional"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:text="🚫 Not an Expense"
-                android:textColor="@color/status_error"
-                android:textSize="12sp"
-                app:rippleColor="@color/status_error_bg" />
-
-        </LinearLayout>
 
     </LinearLayout>
 

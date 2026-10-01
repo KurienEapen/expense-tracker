@@ -38,6 +38,22 @@ def migrate_sqlite_schema(bind_engine: Engine):
                     conn.execute(text("ALTER TABLE transactions ADD COLUMN review_source VARCHAR(32) NOT NULL DEFAULT 'auto'"))
                 if "reviewed_at_utc" not in columns:
                     conn.execute(text("ALTER TABLE transactions ADD COLUMN reviewed_at_utc DATETIME"))
+                if "is_split" not in columns:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN is_split BOOLEAN NOT NULL DEFAULT 0"))
+                if "my_share_paise" not in columns:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN my_share_paise BIGINT"))
+                if "reimbursable_paise" not in columns:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN reimbursable_paise BIGINT NOT NULL DEFAULT 0"))
+                if "split_ratio_label" not in columns:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN split_ratio_label VARCHAR(32)"))
+                if "location_lat" not in columns:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN location_lat FLOAT"))
+                if "location_lng" not in columns:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN location_lng FLOAT"))
+                if "location_name" not in columns:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN location_name VARCHAR(256)"))
+                if "location_address" not in columns:
+                    conn.execute(text("ALTER TABLE transactions ADD COLUMN location_address VARCHAR(512)"))
                 conn.commit()
         except Exception:
             pass
