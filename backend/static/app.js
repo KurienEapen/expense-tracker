@@ -278,7 +278,7 @@ function renderTransactionRow(t, showAction) {
     ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:2px; display:flex; align-items:center; gap:4px;"><span style="color:var(--accent-warning);">📍</span> ${escapeHtml(t.location_name)}</div>`
     : '';
 
-  const nonSplittable = ['Transfers & Payments', 'Transfer', 'Rewards & Cashback'];
+  const nonSplittable = ['Transfers & Payments', 'Transfers', 'Transfer', 'Rewards & Cashback'];
   const isCredit = t.transaction_type === 'credit';
   const isEligibleCategory = !nonSplittable.includes(categoryStr);
   const isSplittable = !isCredit && isEligibleCategory && (t.amount_inr > 0);
@@ -354,7 +354,7 @@ function renderMobileTransactionCard(t) {
     ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;"><span style="color:var(--accent-warning);">📍</span> ${escapeHtml(t.location_name)}</div>`
     : '';
 
-  const nonSplittable = ['Transfers & Payments', 'Transfer', 'Rewards & Cashback'];
+  const nonSplittable = ['Transfers & Payments', 'Transfers', 'Transfer', 'Rewards & Cashback'];
   const isCredit = t.transaction_type === 'credit';
   const isEligibleCategory = !nonSplittable.includes(categoryStr);
   const isSplittable = !isCredit && isEligibleCategory && (t.amount_inr > 0);

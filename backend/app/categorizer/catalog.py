@@ -46,7 +46,7 @@ MERCHANT_CATEGORY_CATALOG: Dict[str, List[str]] = {
         "apollo", "1mg", "tata 1mg", "pharmeasy", "netmeds", "medplus",
         "practo", "pharmacy", "chemist", "hospital", "clinic", "diagnostics"
     ],
-    "Transfers & Payments": [
+    "Transfers": [
         "credit card payment", "payment received", "towards your", "reversal",
         "interest", "online payment", "fund transfer", "paid you", "paid to"
     ],

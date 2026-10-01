@@ -34,7 +34,7 @@ def categorize_transaction(
     # 2. Credit or payment received without specific merchant
     if transaction_type == "credit" and (not merchant or any(k in merchant.lower() for k in ["bank", "payment", "card", "online"])):
         return CategorizationResult(
-            category="Transfers & Payments",
+            category="Transfers",
             confidence=1.0,
             needs_review=False
         )

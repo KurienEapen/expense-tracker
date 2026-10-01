@@ -26,9 +26,9 @@ def test_categorize_transaction_engine(db):
     assert res1.category == "Fuel"
     assert res1.needs_review is False
 
-    # 2. Credit bill payment -> Transfers & Payments
+    # 2. Credit bill payment -> Transfers
     res2 = categorize_transaction(db, merchant="HDFC Bank", transaction_type="credit")
-    assert res2.category == "Transfers & Payments"
+    assert res2.category == "Transfers"
     assert res2.needs_review is False
 
     # 3. Known catalog merchant -> Auto-categorized
