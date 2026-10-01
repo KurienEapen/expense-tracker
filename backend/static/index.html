@@ -197,8 +197,11 @@
         <div class="panel" id="sectionTransactions" style="display:none;">
           <div class="panel-header" style="flex-wrap:wrap; gap:12px;">
             <h2 class="panel-title">All Transactions</h2>
-            <div style="display:flex; gap:10px; flex:1; max-width:500px;">
+            <div style="display:flex; gap:10px; flex:1; max-width:650px;">
               <input type="text" id="searchInput" class="input-control" placeholder="Search merchant or issuer..." oninput="debounceSearch()">
+              <select id="issuerFilter" class="input-control" style="width:140px;" onchange="loadFullTransactions()">
+                <option value="">All Issuers / Banks</option>
+              </select>
               <select id="categoryFilter" class="input-control" style="width:160px;" onchange="loadFullTransactions()">
                 <option value="">All Categories</option>
               </select>

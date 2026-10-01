@@ -171,23 +171,45 @@ function renderCategoryBreakdown(items) {
 
 function renderIssuerBreakdown(items) {
   const container = document.getElementById('issuerBreakdownList');
+  if (!container) return;
+
   if (!items || items.length === 0) {
     container.innerHTML = `<div style="color:var(--text-muted); padding:12px;">No card data available.</div>`;
     return;
   }
 
+  // Dynamically populate issuer filter dropdown options
+  const issuerSelect = document.getElementById('issuerFilter');
+  if (issuerSelect) {
+    const currentVal = issuerSelect.value;
+    issuerSelect.innerHTML = `<option value="">All Issuers / Banks</option>` + items.map(i => `<option value="${escapeHtml(i.issuer)}">${escapeHtml(i.issuer)}</option>`).join('');
+    if (currentVal) issuerSelect.value = currentVal;
+  }
+
   container.innerHTML = items.map(iss => {
     const formatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(iss.amount_inr);
     return `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-subtle);">
+      <div onclick="filterByIssuer('${escapeHtml(iss.issuer)}')" class="issuer-clickable-row" style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px solid var(--border-subtle); cursor:pointer; border-radius:var(--radius-sm); transition:background 0.15s ease;" title="Click to view all ${escapeHtml(iss.issuer)} transactions">
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="issuer-badge">${escapeHtml(iss.issuer)}</span>
           <span style="font-size:12px; color:var(--text-muted);">${iss.count} txn${iss.count > 1 ? 's' : ''}</span>
         </div>
-        <span style="font-family:var(--font-mono); font-weight:600; color:var(--text-primary);">${formatted}</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-family:var(--font-mono); font-weight:600; color:var(--text-primary);">${formatted}</span>
+          <span style="font-size:12px; color:var(--text-muted);">→</span>
+        </div>
       </div>
     `;
   }).join('');
+}
+
+function filterByIssuer(issuerName) {
+  const issuerSelect = document.getElementById('issuerFilter');
+  if (issuerSelect) {
+    issuerSelect.value = issuerName;
+  }
+  showSection('transactions');
+  loadFullTransactions();
 }
 
 async function loadRecentTransactions() {
@@ -215,10 +237,14 @@ async function loadRecentTransactions() {
 async function loadFullTransactions() {
   const search = document.getElementById('searchInput').value;
   const category = document.getElementById('categoryFilter').value;
+  const issuerSelect = document.getElementById('issuerFilter');
+  const issuer = issuerSelect ? issuerSelect.value : '';
 
   let url = `/api/v1/transactions?limit=100`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
   if (category) url += `&category=${encodeURIComponent(category)}`;
+  if (issuer) url += `&issuer=${encodeURIComponent(issuer)}`;
+
 
   try {
     const res = await fetch(url);
