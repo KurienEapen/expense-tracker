@@ -24,6 +24,12 @@ def verify_timestamp(timestamp_str: str, tolerance_seconds: int = None) -> Tuple
     return True, ""
 
 def compute_idempotency_key(sender: str, body: str, received_at_ms: int) -> str:
-    """Computes sha256(sender + '|' + body + '|' + received_ts_ms)"""
-    data = f"{sender}|{body}|{received_at_ms}".encode("utf-8")
+    """
+    Computes sha256(sender + '|' + body + '|' + time_bucket).
+    Buckets timestamp into 5-minute windows to ensure duplicate SMS broadcasts 
+    received milliseconds/seconds apart produce identical idempotency keys.
+    """
+    time_bucket = (received_at_ms // 300000) if received_at_ms else 0
+    data = f"{sender.strip().lower()}|{body.strip().lower()}|{time_bucket}".encode("utf-8")
     return hashlib.sha256(data).hexdigest()
+

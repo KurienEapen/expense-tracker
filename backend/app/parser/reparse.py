@@ -40,7 +40,21 @@ def reparse_raw_message(db: Session, raw: RawMessage) -> Optional[Transaction]:
 
     # Check for existing transaction linked to this raw_message_id
     txn = db.query(Transaction).filter(Transaction.raw_message_id == raw.id).first()
+
+    # Check for near-duplicate transaction created from another raw_message
+    if not txn:
+        existing_dup = db.query(Transaction).filter(
+            Transaction.issuer == parsed.issuer,
+            Transaction.amount_paise == parsed.amount_paise,
+            Transaction.merchant_raw == parsed.merchant_raw,
+            Transaction.transacted_at_utc == parsed.transacted_at_utc
+        ).first()
+        if existing_dup:
+            logger.info(f"RawMessage #{raw.id} matches existing Transaction #{existing_dup.id}, skipping duplicate insertion")
+            return existing_dup
+
     if txn:
+
         txn.source = raw.source
         txn.issuer = parsed.issuer
         txn.card_type = parsed.card_type
