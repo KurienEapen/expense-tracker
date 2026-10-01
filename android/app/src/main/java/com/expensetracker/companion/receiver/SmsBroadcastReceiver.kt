@@ -36,12 +36,13 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                 normalizedSender.contains(whitelistedSender) || rawSender.uppercase().contains(whitelistedSender)
             }
 
-            if (!isWhitelisted) {
+            val fullBody = parts.joinToString("") { it.messageBody ?: "" }
+            val isFinancialContent = isFinancialSms(fullBody)
+
+            if (!isWhitelisted && !isFinancialContent) {
                 Log.d(TAG, "Ignoring non-financial SMS sender: $rawSender (normalized: $normalizedSender)")
                 continue
             }
-
-            val fullBody = parts.joinToString("") { it.messageBody ?: "" }
             val receivedAtMs = parts.firstOrNull()?.timestampMillis ?: System.currentTimeMillis()
 
             // Redact full card numbers, CVVs, OTPs (keeps last-4)
@@ -99,5 +100,15 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "SmsReceiver"
+
+        fun isFinancialSms(body: String): Boolean {
+            val lower = body.lowercase()
+            val hasAmount = lower.contains("rs.") || lower.contains("rs ") || lower.contains("inr") || lower.contains("₹")
+            val hasAction = lower.contains("spent") || lower.contains("debited") || lower.contains("credited") ||
+                    lower.contains("paid") || lower.contains("withdrawn") || lower.contains("transferred") ||
+                    lower.contains("txn") || lower.contains("card no") || lower.contains("wallet") ||
+                    lower.contains("bal")
+            return hasAmount && hasAction
+        }
     }
 }

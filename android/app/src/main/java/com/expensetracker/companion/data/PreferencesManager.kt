@@ -25,7 +25,7 @@ class PreferencesManager(context: Context) {
     var senderWhitelist: String
         get() = prefs.getString(
             KEY_SENDER_WHITELIST,
-            "HDFCBK,ICICIB,SBICRD,AXISBK,JUPITR,SCAPIA,HSBCIN,FEDBNK,INDUSB,KOTAKB"
+            "HDFCBK,ICICIB,SBICRD,AXISBK,JUPITR,SCAPIA,HSBCIN,FEDBNK,INDUSB,KOTAKB,PLUXEE,SODEXO,ONECRD,FIMONEY,CRED,PAYTM,AMZPAY,IDFCFB,RBLBNK,YESBNK,CITIBK,SCBL,TATAPAY,AIRTEL,POSTPE,SLICEC,UNI"
         ) ?: ""
         set(value) = prefs.edit().putString(KEY_SENDER_WHITELIST, value).apply()
 
@@ -37,10 +37,17 @@ class PreferencesManager(context: Context) {
         set(value) = prefs.edit().putString(KEY_APP_WHITELIST, value).apply()
 
     fun getSenderWhitelistSet(): Set<String> {
-        return senderWhitelist.split(",")
+        val userSet = senderWhitelist.split(",")
             .map { it.trim().uppercase() }
             .filter { it.isNotEmpty() }
             .toSet()
+        val defaultCore = setOf(
+            "HDFCBK", "ICICIB", "SBICRD", "AXISBK", "JUPITR", "SCAPIA", "HSBCIN",
+            "FEDBNK", "INDUSB", "KOTAKB", "PLUXEE", "SODEXO", "ONECRD", "FIMONEY",
+            "CRED", "PAYTM", "AMZPAY", "IDFCFB", "RBLBNK", "YESBNK", "CITIBK",
+            "SCBL", "TATAPAY", "AIRTEL", "POSTPE", "SLICEC", "UNI"
+        )
+        return userSet + defaultCore
     }
 
     fun getAppWhitelistSet(): Set<String> {

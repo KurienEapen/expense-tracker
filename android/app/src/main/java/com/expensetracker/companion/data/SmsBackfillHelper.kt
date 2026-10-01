@@ -45,8 +45,9 @@ class SmsBackfillHelper(private val context: Context) {
                 val isWhitelisted = whitelist.any {
                     normalizedSender.contains(it) || rawSender.uppercase().contains(it)
                 }
+                val isFinancial = com.expensetracker.companion.receiver.SmsBroadcastReceiver.isFinancialSms(body)
 
-                if (!isWhitelisted) continue
+                if (!isWhitelisted && !isFinancial) continue
 
                 val redactedBody = CryptoUtils.redactSensitiveInfo(body)
                 val idempotencyKey = CryptoUtils.computeIdempotencyKey(normalizedSender, redactedBody, dateMs)

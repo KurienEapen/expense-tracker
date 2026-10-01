@@ -1,0 +1,18 @@
+- id: pluxee_spent_wallet
+  issuer: Pluxee
+  card_type: prepaid
+  senders: ["PLUXEE"]
+  transaction_type: debit
+  regex: >-
+    (?i)(?:Rs\.?|INR)\s*([0-9,]+(?:\.[0-9]{1,2})?)\s+spent\s+from\s+Pluxee\s*(?:[A-Za-z]+)?\s*wallet(?:,\s*card\s+no\.(?:\s*xx)?(\d{4})?)?\s+on\s+(\d{1,2}-\d{1,2}-\d{4}\s+\d{1,2}:\d{2}:\d{2})\s+at\s+([^.]+?)(?:\s*\.|\s+Avl)
+  groups:
+    amount: 1
+    card_last4: 2
+    txn_date: 3
+    merchant: 4
+  test_cases:
+    - input: "Rs. 280.19 spent from Pluxee  Meal wallet, card no.xx2717 on 1-10-2026 21:04:22 at ETERNAL LIM . Avl bal Rs.15434.33. Not you call 18002106919"
+      expected:
+        amount_paise: 28019
+        card_last4: "2717"
+        merchant: "Eternal Lim"
