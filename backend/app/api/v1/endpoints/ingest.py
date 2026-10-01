@@ -1,11 +1,13 @@
 import json
 from datetime import datetime
-from fastapi import APIRouter, Depends, status
+from typing import Optional, List
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.deps import authenticate_device
 from app.models.device import Device
 from app.models.raw_message import RawMessage
+from app.models.transaction import Transaction
 from pydantic import BaseModel
 from app.schemas.ingest import IngestPayload, IngestResponse
 from app.core.security import compute_idempotency_key
@@ -84,6 +86,7 @@ class ConvertRawRequest(BaseModel):
     category: str
     transaction_type: str = "debit"
 
+@router.post("/ingest/convert-raw/{raw_id}", response_model=IngestResponse)
 @router.post("/convert-raw/{raw_id}", response_model=IngestResponse)
 def convert_raw_to_transaction(
     raw_id: int,
@@ -161,4 +164,55 @@ def convert_raw_to_transaction(
         category=txn.category,
         message=f"Successfully converted SMS into transaction and learned rule for '{merchant_clean}'"
     )
+
+class RawMessageResponse(BaseModel):
+    id: int
+    sender: str
+    body: str
+    source: str
+    received_at_ms: int
+    is_parsed: bool
+    transaction_id: Optional[int] = None
+
+@router.get("/ingest/raw-messages", response_model=List[RawMessageResponse])
+@router.get("/raw-messages", response_model=List[RawMessageResponse])
+def list_raw_messages(
+    unparsed_only: bool = Query(False, description="Filter only unparsed/ignored raw messages"),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns list of stored raw SMS messages with parsing status.
+    Allows inspection and 1-tap conversion of ignored or unparsed messages.
+    """
+    from app.models.transaction import Transaction
+
+    query = db.query(RawMessage).order_by(RawMessage.id.desc())
+    raw_list = query.limit(limit * 2).all()
+
+    raw_ids = [r.id for r in raw_list]
+    txns = db.query(Transaction.id, Transaction.raw_message_id).filter(Transaction.raw_message_id.in_(raw_ids)).all()
+    txn_map = {t.raw_message_id: t.id for t in txns}
+
+    results = []
+    for r in raw_list:
+        txn_id = txn_map.get(r.id)
+        is_parsed = (txn_id is not None)
+        if unparsed_only and is_parsed:
+            continue
+        results.append(
+            RawMessageResponse(
+                id=r.id,
+                sender=r.sender,
+                body=r.body,
+                source=r.source,
+                received_at_ms=r.received_at_ms,
+                is_parsed=is_parsed,
+                transaction_id=txn_id
+            )
+        )
+        if len(results) >= limit:
+            break
+    return results
+
 

@@ -170,6 +170,14 @@ class MainActivity : AppCompatActivity() {
             openReviewBottomSheet()
         }
 
+        // Raw SMS Inspector actions
+        binding.cardRawMessages.setOnClickListener {
+            openRawInspectorBottomSheet()
+        }
+        binding.btnOpenRawInspector.setOnClickListener {
+            openRawInspectorBottomSheet()
+        }
+
         // Pull-to-refresh
         binding.swipeRefresh.setOnRefreshListener {
             checkServerHealth()
@@ -284,6 +292,14 @@ class MainActivity : AppCompatActivity() {
             fetchUnreviewedCount()
         }
         sheet.show(supportFragmentManager, UnreviewedBottomSheetFragment.TAG)
+    }
+
+    private fun openRawInspectorBottomSheet() {
+        val sheet = RawMessagesBottomSheetFragment.newInstance()
+        sheet.onConvertedCallback = {
+            fetchUnreviewedCount()
+        }
+        sheet.show(supportFragmentManager, RawMessagesBottomSheetFragment.TAG)
     }
 
     private fun fetchUnreviewedCount() {

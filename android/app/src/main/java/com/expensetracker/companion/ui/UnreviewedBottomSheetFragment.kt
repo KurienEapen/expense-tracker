@@ -62,6 +62,13 @@ class UnreviewedBottomSheetFragment : BottomSheetDialogFragment() {
                 .show(fm, IgnoredRulesBottomSheetFragment.TAG)
         }
 
+        binding.btnInspectRawSms.setOnClickListener {
+            val fm = parentFragmentManager
+            dismiss()
+            RawMessagesBottomSheetFragment.newInstance()
+                .show(fm, RawMessagesBottomSheetFragment.TAG)
+        }
+
         setupRecyclerView()
         loadUnreviewedTransactions()
     }
