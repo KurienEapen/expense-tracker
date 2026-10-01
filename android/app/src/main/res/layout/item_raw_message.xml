@@ -81,7 +81,7 @@
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="✨ Convert to Transaction"
+                android:text="Convert to Transaction"
                 android:textSize="12sp"
                 app:cornerRadius="8dp" />
 

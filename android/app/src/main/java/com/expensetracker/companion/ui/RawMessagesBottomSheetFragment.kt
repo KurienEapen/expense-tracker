@@ -99,12 +99,8 @@ class RawMessagesBottomSheetFragment : BottomSheetDialogFragment() {
     }
 
     private fun setupFilters() {
-        binding.chipUnparsedOnly.setOnClickListener {
-            filterUnparsedOnly = true
-            loadRawMessages()
-        }
-        binding.chipAllMessages.setOnClickListener {
-            filterUnparsedOnly = false
+        binding.chipGroupFilter.setOnCheckedStateChangeListener { _, checkedIds ->
+            filterUnparsedOnly = checkedIds.contains(R.id.chipUnparsedOnly)
             loadRawMessages()
         }
     }

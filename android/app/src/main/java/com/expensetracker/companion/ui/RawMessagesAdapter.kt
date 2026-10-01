@@ -41,7 +41,7 @@ class RawMessagesAdapter(
             holder.binding.tvRawStatusBadge.text = "Ignored / Unparsed"
             holder.binding.tvRawStatusBadge.setBackgroundResource(R.drawable.badge_pill_warning)
             holder.binding.tvRawStatusBadge.setTextColor(ContextCompat.getColor(context, R.color.status_warning))
-            holder.binding.btnConvertToTxn.text = "✨ Convert to Transaction"
+            holder.binding.btnConvertToTxn.text = "Convert to Transaction"
         }
 
         holder.binding.btnConvertToTxn.setOnClickListener {
